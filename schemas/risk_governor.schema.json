@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Risk Governor Schema",
+  "description": "BSHL Alpha Skill - Risk Governor 风控总闸结构化数据定义",
+  "type": "object",
+  "properties": {
+    "ticker": {
+      "type": "string",
+      "description": "标的代码"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "检查日期"
+    },
+    "checklist": {
+      "type": "object",
+      "properties": {
+        "liquidity": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "boolean"},
+            "detail": {"type": "string"},
+            "daily_volume": {"type": "number"}
+          }
+        },
+        "volatility": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "boolean"},
+            "detail": {"type": "string"},
+            "atr_percent": {"type": "number"}
+          }
+        },
+        "evidence_quality": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "boolean"},
+            "detail": {"type": "string"},
+            "strong_count": {"type": "integer"},
+            "medium_count": {"type": "integer"}
+          }
+        },
+        "social_crowding": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "boolean"},
+            "detail": {"type": "string"},
+            "level": {
+              "type": "string",
+              "enum": ["EXTREME", "HIGH", "MODERATE", "LOW"]
+            }
+          }
+        },
+        "earnings_risk": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "boolean"},
+            "detail": {"type": "string"},
+            "days_to_earnings": {"type": "integer"}
+          }
+        },
+        "regulatory_uncertainty": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "boolean"},
+            "detail": {"type": "string"}
+          }
+        },
+        "price_location": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "boolean"},
+            "detail": {"type": "string"},
+            "distance_from_ma20_atr": {"type": "number"}
+          }
+        },
+        "stop_loss_distance": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "boolean"},
+            "detail": {"type": "string"},
+            "distance_percent": {"type": "number"}
+          }
+        },
+        "position_exposure": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "boolean"},
+            "detail": {"type": "string"},
+            "suggested_percent": {"type": "number"}
+          }
+        },
+        "correlation": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "boolean"},
+            "detail": {"type": "string"},
+            "correlation_coefficient": {"type": "number"}
+          }
+        }
+      }
+    },
+    "triggered_conditions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "condition": {"type": "string"},
+          "severity": {
+            "type": "string",
+            "enum": ["CRITICAL", "HIGH", "MODERATE", "LOW"]
+          },
+          "description": {"type": "string"}
+        }
+      }
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["Pass", "Reduce Size", "Watch Only", "Wait Confirmation", "Wait", "Veto"],
+      "description": "风控决策"
+    },
+    "reasoning": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "决策理由"
+    },
+    "suggested_action": {
+      "type": "string",
+      "description": "建议动作"
+    },
+    "risk_warning": {
+      "type": "string",
+      "description": "风险提示"
+    },
+    "expiration_conditions": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "判断失效条件"
+    }
+  },
+  "required": ["ticker", "date", "decision"]
+}

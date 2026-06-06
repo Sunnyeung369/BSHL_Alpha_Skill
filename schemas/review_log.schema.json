@@ -1,0 +1,301 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Review Log Schema",
+  "description": "BSHL Alpha Skill - Review Log 复盘日志结构化数据定义",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "复盘唯一标识"
+    },
+    "ticker": {
+      "type": "string",
+      "description": "标的代码"
+    },
+    "review_type": {
+      "type": "string",
+      "enum": ["trade_completed", "observation_ended", "judgment_error", "rule_validation"],
+      "description": "复盘类型"
+    },
+    "review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "复盘日期"
+    },
+    "original_analysis": {
+      "type": "object",
+      "properties": {
+        "analysis_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "price_at_analysis": {
+          "type": "number"
+        },
+        "conclusion": {
+          "type": "string",
+          "enum": ["Research Only", "Watchlist", "Trade Ready", "Wait Pullback", "Avoid", "Veto"]
+        },
+        "alpha_thesis_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "market_pricing_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "trade_readiness_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "core_hypothesis": {
+          "type": "string"
+        },
+        "key_evidence": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "market_regime": {
+          "type": "string"
+        },
+        "technical_structure": {
+          "type": "string"
+        },
+        "risk_governor": {
+          "type": "string"
+        },
+        "stop_loss": {
+          "type": "number"
+        },
+        "target": {
+          "type": "number"
+        }
+      }
+    },
+    "actual_outcome": {
+      "type": "object",
+      "properties": {
+        "price_at_review": {
+          "type": "number"
+        },
+        "price_change_percent": {
+          "type": "number"
+        },
+        "price_path": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": {"type": "string", "format": "date"},
+              "price": {"type": "number"},
+              "event": {"type": "string"}
+            }
+          }
+        },
+        "catalyst_realization": {
+          "type": "object",
+          "properties": {
+            "catalyst": {"type": "string"},
+            "realized": {
+              "type": "string",
+              "enum": ["realized", "partial", "not_realized"]
+            },
+            "impact": {
+              "type": "string",
+              "enum": ["positive", "neutral", "negative"]
+            }
+          }
+        },
+        "market_changes": {
+          "type": "object",
+          "properties": {
+            "index_change": {"type": "number"},
+            "sector_change": {"type": "number"},
+            "risk_appetite_change": {
+              "type": "string",
+              "enum": ["improved", "stable", "deteriorated"]
+            }
+          }
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "properties": {
+        "correct_aspects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "aspect": {"type": "string"},
+              "reason": {"type": "string"}
+            }
+          }
+        },
+        "incorrect_aspects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "aspect": {"type": "string"},
+              "reason": {"type": "string"}
+            }
+          }
+        },
+        "evidence_validation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evidence": {"type": "string"},
+              "validated": {
+                "type": "string",
+                "enum": ["validated", "partial", "invalidated"]
+              }
+            }
+          }
+        },
+        "market_regime_judgment": {
+          "type": "object",
+          "properties": {
+            "correct": {"type": "array", "items": {"type": "string"}},
+            "incorrect": {"type": "array", "items": {"type": "string"}},
+            "reason": {"type": "string"}
+          }
+        },
+        "technical_judgment": {
+          "type": "object",
+          "properties": {
+            "correct": {"type": "array", "items": {"type": "string"}},
+            "incorrect": {"type": "array", "items": {"type": "string"}},
+            "early_warning": {
+              "type": "boolean",
+              "description": "K线是否提前预警"
+            }
+          }
+        },
+        "risk_control_execution": {
+          "type": "object",
+          "properties": {
+            "stop_executed": {
+              "type": "boolean"
+            },
+            "position_size_appropriate": {
+              "type": "boolean"
+            },
+            "effectiveness": {
+              "type": "string",
+              "enum": ["effective", "partial", "ineffective"]
+            }
+          }
+        }
+      }
+    },
+    "root_cause_analysis": {
+      "type": "object",
+      "properties": {
+        "success_factors": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "failure_factors": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "system_biases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "bias": {"type": "string"},
+              "impact": {
+                "type": "string",
+                "enum": ["high", "medium", "low"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "rule_updates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rule_type": {
+            "type": "string",
+            "enum": ["new", "modified", "deleted"]
+          },
+          "rule_id": {
+            "type": "string"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "reasoning": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          }
+        }
+      }
+    },
+    "lessons_learned": {
+      "type": "object",
+      "properties": {
+        "reusable_insights": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "mistakes_to_avoid": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "improvements_needed": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "follow_up_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {"type": "string"},
+          "priority": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in_progress", "completed"]
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "创建时间"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "更新时间"
+    }
+  },
+  "required": ["id", "ticker", "review_type", "review_date", "original_analysis", "actual_outcome"]
+}

@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Trade Readiness Schema",
+  "description": "BSHL Alpha Skill - Trade Readiness 交易准备状态结构化数据定义",
+  "type": "object",
+  "properties": {
+    "ticker": {
+      "type": "string",
+      "description": "标的代码"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "评估日期"
+    },
+    "current_price": {
+      "type": "number",
+      "description": "当前价格"
+    },
+    "pricing_status": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["FULLY_PRICED", "PARTIALLY_PRICED", "UNDERPRICED"]
+        },
+        "description": {"type": "string"},
+        "gain_vs_key_level": {"type": "string"},
+        "valuation_vs_history": {"type": "string"}
+      }
+    },
+    "crowding": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["EXTREME", "HIGH", "MODERATE", "LOW"]
+        },
+        "volume_ratio": {"type": "number"},
+        "social_sentiment": {"type": "string"},
+        "options_sentiment": {"type": "string"}
+      }
+    },
+    "technical_structure": {
+      "type": "object",
+      "properties": {
+        "parent_cycle": {
+          "type": "string",
+          "enum": ["UP", "CONSOLIDATION", "DOWN"]
+        },
+        "child_cycle": {
+          "type": "string",
+          "enum": ["BASE_BUILDING", "BREAKOUT_WATCH", "ACCELERATING", "PULLBACK", "EXHAUSTION", "BREAKDOWN"]
+        },
+        "support": {"type": "number"},
+        "resistance": {"type": "number"},
+        "atr": {"type": "number"},
+        "atr_percent": {"type": "number"},
+        "distance_from_support_atr": {"type": "number"},
+        "structure_status": {
+          "type": "string",
+          "enum": ["OPTIMAL", "REASONABLE", "POOR"]
+        }
+      }
+    },
+    "risk_check": {
+      "type": "object",
+      "properties": {
+        "liquidity": {
+          "type": "string",
+          "enum": ["ADEQUATE", "MARGINAL", "INADEQUATE"]
+        },
+        "volatility": {
+          "type": "string",
+          "enum": ["CONTROLLED", "ELEVATED", "EXCESSIVE"]
+        },
+        "evidence_quality": {
+          "type": "string",
+          "enum": ["STRONG", "MODERATE", "WEAK"]
+        },
+        "social_crowding": {
+          "type": "boolean"
+        },
+        "earnings_risk": {
+          "type": "string",
+          "enum": ["HIGH", "MODERATE", "LOW", "NONE"]
+        },
+        "regulatory_uncertainty": {
+          "type": "boolean"
+        },
+        "distance_from_mean": {
+          "type": "string",
+          "enum": ["NORMAL", "STRETCHED", "EXTREME"]
+        },
+        "stop_loss_distance": {
+          "type": "string",
+          "enum": ["REASONABLE", "WIDE", "EXCESSIVE"]
+        },
+        "position_exposure": {
+          "type": "string",
+          "enum": ["ACCEPTABLE", "ELEVATED", "EXCESSIVE"]
+        },
+        "correlation": {
+          "type": "string",
+          "enum": ["LOW", "MODERATE", "HIGH"]
+        }
+      }
+    },
+    "stop_loss": {
+      "type": "object",
+      "properties": {
+        "level": {"type": "number"},
+        "clear": {"type": "boolean"},
+        "distance_percent": {"type": "number"},
+        "distance_atr": {"type": "number"}
+      }
+    },
+    "reward_risk_ratio": {
+      "type": "object",
+      "properties": {
+        "ratio": {"type": "number"},
+        "target": {"type": "number"},
+        "rating": {
+          "type": "string",
+          "enum": ["EXCELLENT", "GOOD", "FAIR", "POOR"]
+        }
+      }
+    },
+    "trade_readiness_score": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "grade": {
+          "type": "string",
+          "enum": ["A", "B", "C", "D"]
+        },
+        "breakdown": {
+          "type": "object",
+          "properties": {
+            "parent_cycle_direction": {"type": "number"},
+            "child_cycle_structure": {"type": "number"},
+            "breakout_confirmation": {"type": "number"},
+            "pullback_quality": {"type": "number"},
+            "volume_confirmation": {"type": "number"},
+            "stop_loss_clarity": {"type": "number"},
+            "reward_risk": {"type": "number"},
+            "volatility_controlled": {"type": "number"}
+          }
+        }
+      }
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": ["Trade Ready", "Watch Closely", "Wait", "No Trade"],
+      "description": "交易准备状态"
+    },
+    "action": {
+      "type": "string",
+      "description": "建议动作"
+    },
+    "watch_conditions": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "观察条件"
+    },
+    "abandon_conditions": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "放弃条件"
+    }
+  },
+  "required": ["ticker", "date", "overall_status"]
+}

@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Evidence Ledger Schema",
+  "description": "BSHL Alpha Skill - Evidence Ledger 证据账本结构化数据定义",
+  "type": "object",
+  "properties": {
+    "ticker": {
+      "type": "string",
+      "description": "标的代码"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "账本日期"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "证据唯一标识"
+          },
+          "claim": {
+            "type": "string",
+            "description": "证据声明"
+          },
+          "source_type": {
+            "type": "string",
+            "enum": ["filing", "transcript", "company_release", "industry_report", "media", "social"],
+            "description": "来源类型"
+          },
+          "source_name": {
+            "type": "string",
+            "description": "来源名称"
+          },
+          "source_url": {
+            "type": "string",
+            "description": "来源链接"
+          },
+          "source_date": {
+            "type": "string",
+            "format": "date",
+            "description": "来源日期"
+          },
+          "evidence_strength": {
+            "type": "string",
+            "enum": ["strong", "medium", "weak", "stale"],
+            "description": "证据强度"
+          },
+          "supports_or_refutes": {
+            "type": "string",
+            "enum": ["supports", "refutes", "mixed"],
+            "description": "支持或反驳"
+          },
+          "affected_thesis": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["demand", "supply", "margin", "valuation", "catalyst", "risk"]
+            },
+            "description": "影响的论题"
+          },
+          "freshness": {
+            "type": "string",
+            "enum": ["fresh", "aging", "stale"],
+            "description": "新鲜度"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "置信度"
+          },
+          "kill_switch": {
+            "type": "boolean",
+            "description": "是否为一票否决证据"
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "标签"
+          },
+          "notes": {
+            "type": "string",
+            "description": "备注"
+          }
+        },
+        "required": ["id", "claim", "source_type", "evidence_strength", "supports_or_refutes"]
+      }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total_count": {"type": "integer"},
+        "strong_count": {"type": "integer"},
+        "medium_count": {"type": "integer"},
+        "weak_count": {"type": "integer"},
+        "stale_count": {"type": "integer"},
+        "supports_count": {"type": "integer"},
+        "refutes_count": {"type": "integer"},
+        "kill_switch_count": {"type": "integer"}
+      }
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "最后更新时间"
+    }
+  },
+  "required": ["ticker", "date", "evidence"]
+}

@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Market Regime Schema",
+  "description": "BSHL Alpha Skill - Market Regime 市场状态结构化数据定义",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "评估日期"
+    },
+    "market": {
+      "type": "string",
+      "enum": ["US", "HK", "CN", "GLOBAL"],
+      "description": "市场"
+    },
+    "index_trend": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["UP", "CONSOLIDATION", "DOWN"]
+        },
+        "description": {"type": "string"},
+        "key_levels": {
+          "type": "object",
+          "properties": {
+            "support": {"type": "number"},
+            "resistance": {"type": "number"}
+          }
+        }
+      }
+    },
+    "sector_trend": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["STRONG", "NEUTRAL", "WEAK"]
+        },
+        "relative_strength": {"type": "string"},
+        "description": {"type": "string"}
+      }
+    },
+    "liquidity": {
+      "type": "object",
+      "properties": {
+        "fed_policy": {
+          "type": "string",
+          "enum": ["HAWKISH", "NEUTRAL", "DOVISH"]
+        },
+        "treasury_yield": {"type": "number"},
+        "dxy": {"type": "number"},
+        "description": {"type": "string"}
+      }
+    },
+    "risk_appetite": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["RISK_ON", "NEUTRAL", "RISK_OFF"]
+        },
+        "vix": {"type": "number"},
+        "high_yield_spread": {"type": "number"},
+        "description": {"type": "string"}
+      }
+    },
+    "breadth": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["BROAD", "NARROW"]
+        },
+        "advance_decline_ratio": {"type": "number"},
+        "description": {"type": "string"}
+      }
+    },
+    "theme_crowding": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["EXTREME", "HIGH", "MODERATE", "LOW"]
+        },
+        "social_volume": {"type": "string"},
+        "trading_volume": {"type": "string"},
+        "description": {"type": "string"}
+      }
+    },
+    "options_sentiment": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["EXCESSIVELY_BULLISH", "BULLISH", "NEUTRAL", "BEARISH", "EXCESSIVELY_BEARISH"]
+        },
+        "put_call_ratio": {"type": "number"},
+        "iv": {"type": "number"},
+        "iv_percentile": {"type": "number"},
+        "description": {"type": "string"}
+      }
+    },
+    "overall_regime": {
+      "type": "string",
+      "enum": ["RISK_ON", "NEUTRAL", "RISK_OFF", "CROWDED", "ROTATION", "BREAKDOWN"],
+      "description": "综合市场状态"
+    },
+    "trading_strategy": {
+      "type": "string",
+      "description": "基于市场状态的交易策略建议"
+    }
+  },
+  "required": ["date", "market", "overall_regime"]
+}
