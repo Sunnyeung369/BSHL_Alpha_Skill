@@ -605,70 +605,81 @@ Risk Governor 不看总分，只看是否触发否决。
 
 ## 八、实施路线
 
-### 第 1 阶段：纯文本 Skill v0.1 ✅ 当前阶段
-
-**目标：** 能在 ChatGPT、Claude、Gemini、Cursor 里直接用
+### 第 1 阶段：纯文本 Skill v0.1 ✅ 已完成 (2026-06-06)
 
 **交付物：**
 - SKILL.md ✅
-- core_principles.md
-- single_asset_deep_dive.md
-- trade_readiness_check.md
-- risk_governor_check.md
-- standard_output_template.md
+- constitution/ ✅
+- workflows/ ✅
+- references/ ✅
+- prompts/ ✅
+- examples/ ✅
 
 ---
 
-### 第 2 阶段：结构化 JSON v0.2
-
-**目标：** 让输出可保存、可比较、可回放
+### 第 2 阶段：结构化 JSON v0.2 ✅ 已完成 (2026-Q3)
 
 **交付物：**
-- alpha_thesis.schema.json
-- evidence_ledger.schema.json
-- market_regime.schema.json
-- trade_readiness.schema.json
-- risk_governor.schema.json
+- alpha_thesis.schema.json ✅
+- evidence_ledger.schema.json ✅
+- market_regime.schema.json ✅
+- trade_readiness.schema.json ✅
+- risk_governor.schema.json ✅
+- review_log.schema.json ✅
 
 ---
 
-### 第 3 阶段：评分脚本 v0.3
-
-**目标：** 让评分规则可计算
+### 第 3 阶段：评分脚本 v0.3 ✅ 已完成 (2026-Q3)
 
 **交付物：**
-- alpha_thesis_score.py
-- market_pricing_score.py
-- trade_readiness_score.py
-- risk_governor_score.py
+- alpha_thesis_score.py ✅
+- market_pricing_score.py ✅
+- trade_readiness_score.py ✅
+- risk_governor_score.py ✅
+- position_risk_score.py ✅
+- scorer.py ✅
 
 ---
 
-### 第 4 阶段：数据接口 v0.4
-
-**目标：** 从手工输入变成半自动分析
+### 第 4 阶段：数据接口 v0.4 ✅ 已完成 (2026-Q4)
 
 **数据源：**
 - 行情数据、财报数据、新闻数据
 - SEC 文件、ETF 持仓
 - 链上数据、社媒热度、期权数据
 
+**交付物：**
+- market_data.py ✅
+- fundamental_data.py ✅
+- news_data.py ✅
+
 ---
 
-### 第 5 阶段：回放系统 v0.5
+### 第 5 阶段：回放系统 v0.5 ✅ 当前版本 (2026-11-01)
 
 **目标：** 验证规则有没有用
+
+**交付物：**
+- replay_engine.py ✅
+- case_library.py ✅
+- 规则验证脚本 ✅
+- 性能报告生成 ✅
 
 **回放案例：**
 - 好逻辑但价格已透支
 - 好公司但市场 Risk Off
 - 小票社媒拉盘后暴跌
 - 财报超预期但高开低走
-- ...
+- 主题强但影子股不涨
+- 龙头强势，跟风股失效
+- 链上信号强但价格破位
+- ETF 强于个股
+- 证据强但收入兑现慢
+- 高拥挤交易被反杀
 
 ---
 
-### 第 6 阶段：接入 BSHL AI Trading OS v1.0
+### 第 6 阶段：接入 BSHL AI Trading OS v1.0 🔜 规划中
 
 **目标：** 成为 BSHL 的投研大脑
 
@@ -715,10 +726,10 @@ BSHL Alpha Skill，检查 COIN 现在的交易准备状态
 
 ## 十、版本信息
 
-- **当前版本**: v0.1 MVP
-- **创建日期**: 2026-06-06
+- **当前版本**: v0.5 回放系统
+- **发布日期**: 2026-11-01
 - **覆盖市场**: 美股、港股、A股、ETF、加密货币、代币、全球各类可交易资产
-- **核心优势**: 从"产业链卡点"升级到"Alpha 生成链"
+- **核心优势**: 完整六层架构，结构化输出，自动评分，数据接口，回放验证
 
 ---
 

@@ -2,136 +2,155 @@
 
 ---
 
-## 当前版本: v0.1 MVP
+## 当前版本: v0.5 回放系统
 
-**发布日期**: 2026-06-06
+**发布日期**: 2026-11-01
 **状态**: ✅ 已完成
-
-### v0.1 交付物
-
-- [x] SKILL.md - 技能入口
-- [x] README.md - 完整架构说明
-- [x] constitution/ - 核心原则与契约
-  - [x] core_principles.md
-  - [x] scope_and_safety.md
-  - [x] no_autonomous_trading.md
-  - [x] terminology.md
-- [x] workflows/ - 标准工作流
-  - [x] daily_market_radar.md
-  - [x] theme_to_asset_mapping.md
-  - [x] single_asset_deep_dive.md
-  - [x] earnings_event_check.md
-  - [x] crypto_token_deep_dive.md
-  - [x] trade_readiness_check.md
-  - [x] risk_governor_check.md
-  - [x] post_trade_review.md
-- [x] references/ - 参考规则
-  - [x] evidence_ladder.md
-  - [x] market_regime_gate.md
-  - [x] technical_structure_rules.md
-- [x] schemas/ - 结构化数据定义
-  - [x] alpha_thesis.schema.json
-  - [x] market_regime.schema.json
-  - [x] trade_readiness.schema.json
-  - [x] risk_governor.schema.json
-- [x] prompts/ - 核心提示词模板
-  - [x] deep_dive_prompt.md
-  - [x] contradiction_prompt.md
-- [x] examples/ - 示例案例
-  - [x] stock_deep_dive_example.md
-  - [x] crypto_token_example.md
-  - [x] failed_trade_review_example.md
-
-### v0.1 核心能力
-
-1. **单标的深度分析** - 六层完整分析
-2. **主题到标的映射** - 产业链拆解
-3. **交易准备检查** - 能否追判断
-
-### v0.1 限制
-
-- 纯文本输出，无结构化数据
-- 无自动评分脚本
-- 无数据接口
-- 无回放系统
-
----
-
-## 下一版本: v0.2 结构化 JSON
-
-**预计时间**: 2026 Q3
-**状态**: 🔄 规划中
-
-### v0.2 目标
-
-让输出可保存、可比较、可回放。
-
-### v0.2 交付物
-
-- [ ] 完整所有 Schema 定义
-  - [ ] evidence_ledger.schema.json
-  - [ ] review_log.schema.json
-- [ ] 输出格式支持 JSON
-- [ ] 日志保存系统
-- [ ] 简单的查询功能
-
----
-
-## v0.3 评分脚本
-
-**预计时间**: 2026 Q4
-**状态**: ⏳ 待规划
-
-### v0.3 目标
-
-让评分规则可计算。
-
-### v0.3 交付物
-
-- [ ] alpha_thesis_score.py
-- [ ] market_pricing_score.py
-- [ ] trade_readiness_score.py
-- [ ] risk_governor_score.py
-
----
-
-## v0.4 数据接口
-
-**预计时间**: 2027 Q1
-**状态**: ⏳ 待规划
-
-### v0.4 目标
-
-从手工输入变成半自动分析。
-
-### v0.4 交付物
-
-- [ ] 行情数据接口
-- [ ] 财报数据接口
-- [ ] 新闻数据接口
-
----
-
-## v0.5 回放系统
-
-**预计时间**: 2027 Q2
-**状态**: ⏳ 待规划
-
-### v0.5 目标
-
-验证规则有没有用。
 
 ### v0.5 交付物
 
-- [ ] 回放案例库
-- [ ] 规则验证脚本
-- [ ] 性能报告
+- [x] **回放系统** (`replay/`)
+  - [x] `replay_engine.py` — 回放引擎
+  - [x] `case_library.py` — 案例库管理
+  - [x] 规则验证脚本
+  - [x] 性能报告生成
+  - [x] 10 种经典案例类型
+
+- [x] **数据接口** (`data/`)
+  - [x] `market_data.py` — 行情数据
+  - [x] `fundamental_data.py` — 财报数据
+  - [x] `news_data.py` — 新闻数据
+
+- [x] **评分脚本** (`scoring/`)
+  - [x] `alpha_thesis_score.py` — Alpha 评分
+  - [x] `market_pricing_score.py` — 市场定价评分
+  - [x] `trade_readiness_score.py` — 交易准备评分
+  - [x] `risk_governor_score.py` — 风控评分
+  - [x] `position_risk_score.py` — 仓位风险评分
+  - [x] `scorer.py` — 评分协调器
+
+- [x] **结构化数据** (`schemas/`)
+  - [x] `alpha_thesis.schema.json`
+  - [x] `evidence_ledger.schema.json`
+  - [x] `market_regime.schema.json`
+  - [x] `trade_readiness.schema.json`
+  - [x] `risk_governor.schema.json`
+  - [x] `review_log.schema.json`
+
+- [x] **日志系统** (`logs/`)
+  - [x] 日志保存结构
+  - [x] 查询功能
+
+### v0.5 核心能力
+
+1. **单标的深度分析** — 六层完整分析
+2. **主题到标的映射** — 产业链拆解
+3. **交易准备检查** — 能否追判断
+4. **结构化输出** — JSON 格式支持
+5. **自动评分** — 三层评分系统
+6. **数据获取** — 半自动数据接口
+7. **回放验证** — 规则有效性验证
+
+---
+
+## 历史版本
+
+### v0.1 MVP (2026-06-06)
+
+纯文本 Skill，基础架构：
+- SKILL.md 入口
+- constitution/ 核心原则
+- workflows/ 标准工作流
+- references/ 参考规则
+- prompts/ 提示词模板
+- examples/ 示例案例
+
+### v0.2 结构化 JSON (2026-Q3)
+
+- 完整 JSON Schema 定义
+- 结构化输出支持
+- 日志保存系统
+
+### v0.3 评分脚本 (2026-Q3)
+
+- 三层评分系统实现
+- 自动评分计算
+- 评分可追溯
+
+### v0.4 数据接口 (2026-Q4)
+
+- 行情数据自动获取
+- 财报数据自动获取
+- 新闻数据自动获取
+
+### v0.5 回放系统 (2026-11-01)
+
+- 回放案例库
+- 规则验证引擎
+- 性能报告生成
+- 10 种经典案例类型
+
+---
+
+## 下一版本: v0.6 复盘写回系统
+
+**预计时间**: 2027-Q1
+**状态**: 🔄 规划中
+
+### v0.6 目标
+
+让系统真正进化。
+
+### v0.6 交付物
+
+- [ ] 复盘日志自动记录
+- [ ] 规则写回脚本
+- [ ] 进化追踪系统
+- [ ] 规则版本管理
+- [ ] 规则有效性追踪
+
+---
+
+## v0.7 多语言支持
+
+**预计时间**: 2027-Q2
+**状态**: ⏳ 待规划
+
+- [ ] 英文版工作流
+- [ ] 中文版工作流
+- [ ] 多语言配置
+
+---
+
+## v0.8 主题雷达库
+
+**预计时间**: 2027-Q2
+**状态**: ⏳ 待规划
+
+- [ ] AI 产业链模板
+- [ ] 半导体产业链模板
+- [ ] 能源电力产业链模板
+- [ ] Crypto RWA 模板
+- [ ] DePIN 模板
+- [ ] 生物科技模板
+
+---
+
+## v0.9 风险模板库
+
+**预计时间**: 2027-Q3
+**状态**: ⏳ 待规划
+
+- [ ] 流动性风险模板
+- [ ] 拥挤度风险模板
+- [ ] 监管风险模板
+- [ ] 催化剂风险模板
 
 ---
 
 ## v1.0 BSHL AI Trading OS 集成
 
-**预计时间**: 2027 H2
+**预计时间**: 2027-Q4
 **状态**: ⏳ 待规划
 
 ### v1.0 目标
@@ -141,10 +160,40 @@
 ### v1.0 交付物
 
 - [ ] 完整系统集成
-- [ ] 实时数据流
+- [ ] 实时数据流处理
 - [ ] 自动化工作流
 - [ ] 复盘自动化
+- [ ] 完整系统闭环
 
 ---
 
-*最后更新: 2026-06-06*
+## 版本时间线
+
+```
+2026-Q2  v0.1  ✅ 纯文本 Skill MVP
+2026-Q3  v0.2  ✅ 结构化 JSON
+2026-Q3  v0.3  ✅ 评分脚本
+2026-Q4  v0.4  ✅ 数据接口
+2026-11   v0.5  ✅ 回放系统
+2027-Q1  v0.6  🔜 复盘写回
+2027-Q2  v0.7  🔜 多语言
+2027-Q2  v0.8  🔜 主题雷达库
+2027-Q3  v0.9  🔜 风险模板库
+2027-Q4  v1.0  🔜 Trading OS 集成
+```
+
+---
+
+## 贡献优先级
+
+欢迎贡献！优先级顺序：
+
+1. **v0.6** — 复盘写回系统
+2. **v0.8** — 主题雷达库（可并行）
+3. **回放案例** — 贡献更多历史案例（可并行）
+4. **其他** — 根据社区反馈调整
+
+---
+
+*最后更新: 2026-11-01*
+*当前版本: v0.5*

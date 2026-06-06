@@ -91,5 +91,5 @@ BSHL_Alpha_Skill/
 
 ---
 
-*BSHL Alpha Skill v0.1*
+*BSHL Alpha Skill v0.5*
 *证据驱动 · 结构确认 · 风险优先 · 复盘进化*
