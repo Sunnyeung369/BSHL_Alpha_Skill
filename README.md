@@ -686,25 +686,6 @@ Risk Governor 不看总分，只看是否触发否决。
 
 ---
 
-### 第 6 阶段：接入 BSHL AI Trading OS v1.0 🔜 规划中
-
-**目标：** 成为 BSHL 的投研大脑
-
-**最终系统形态：**
-```
-投研雷达发现机会
-→ Alpha Thesis 建立假设
-→ Evidence Ledger 核验证据
-→ Market Regime 判断环境
-→ BSHL K线确认结构
-→ Risk Governor 进行否决
-→ 生成交易准备卡
-→ 用户人工确认
-→ 复盘写回
-```
-
----
-
 ## 九、使用指南
 
 ### 快速开始
