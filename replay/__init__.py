@@ -1,7 +1,7 @@
 """
 BSHL Alpha Skill - Replay Package
 
-回放系统，用于历史回测和规则验证。
+回放系统，用于历史回测、规则验证和个人进化。
 """
 
 from .case_library import (
@@ -22,6 +22,14 @@ from .replay_engine import (
     ReplayEngine,
     RuleTester,
 )
+from .personal_evolution import (
+    PersonalDecision,
+    DecisionType,
+    DecisionOutcome,
+    PersonalRule,
+    PersonalEvolutionEngine,
+    get_engine,
+)
 
 __all__ = [
     # Case Library
@@ -40,4 +48,11 @@ __all__ = [
     "Portfolio",
     "ReplayEngine",
     "RuleTester",
+    # Personal Evolution
+    "PersonalDecision",
+    "DecisionType",
+    "DecisionOutcome",
+    "PersonalRule",
+    "PersonalEvolutionEngine",
+    "get_engine",
 ]

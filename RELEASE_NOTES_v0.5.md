@@ -6,14 +6,58 @@
 ## 版本信息
 
 - **版本号**: v0.5
-- **发布日期**: 2026-11-01
+- **发布日期**: 2026-06-06
 - **状态**: ✅ 已完成
 
 ---
 
 ## 新增功能
 
-### 1. 回放案例库
+### 1. 个人专属进化系统 ⭐
+
+| 模块 | 功能 |
+|------|------|
+| personal_evolution.py | 用户专属进化引擎，根据真实使用历史自适应 |
+
+**核心能力：**
+
+- **个人决策记录** — 记录每次判断、决策和结果
+- **规则自适应** — 成功率高的规则自动提权，低的自动降权
+- **专属洞察** — 基于个人历史的成功率分析、最擅长标的识别
+- **经验沉淀** — 自动积累个人交易经验，形成专属规则库
+- **本地存储** — 数据保存在 `~/.bshl/{user_id}/`，完全私密
+
+**使用示例：**
+
+```python
+from replay import get_engine
+
+# 获取个人进化引擎
+engine = get_engine("your_user_id")
+
+# 记录决策
+from replay import PersonalDecision, DecisionType, DecisionOutcome
+decision = PersonalDecision(
+    id="DEC-001",
+    symbol="NVDA",
+    user_decision=DecisionType.TRADE,
+    outcome=DecisionOutcome.PROFIT,
+    entry_price=800.0,
+    exit_price=850.0,
+    lessons_learned=["AI 需求逻辑验证正确"],
+    rules_to_adjust=["EVIDENCE_MIN_SCORE"],
+)
+engine.record_decision(decision)
+
+# 获取进化洞察
+evolution = engine.evolve()
+print(f"个人成功率: {evolution['insights']['summary']['success_rate']:.1%}")
+print(f"调整后权重: {evolution['adjusted_weights']}")
+```
+
+---
+
+### 2. 回放案例库
 
 | 模块 | 功能 |
 |------|------|
@@ -261,5 +305,5 @@ v1.0 将实现：
 
 ---
 
-*最后更新: 2026-11-01*
+*最后更新: 2026-06-06*
 *版本: v0.5*
