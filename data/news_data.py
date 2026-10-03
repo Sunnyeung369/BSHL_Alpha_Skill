@@ -6,8 +6,10 @@ BSHL Alpha Skill - News Data Interface
 
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
-from dataclasses import dataclass
-from datetime import datetime, date
+from dataclasses import dataclass, field
+from datetime import datetime, date, timezone
+from .contracts import (DataProvenance, DataUnavailableError, MOCK_TIME, mock_metadata,
+                        validate_symbol, validate_limit)
 from enum import Enum
 
 
@@ -33,10 +35,14 @@ class NewsItem:
     sentiment_score: Optional[float]  # -1 到 1
     relevance_score: float  # 0 到 1，与标的的相关性
     keywords: List[str]
+    source_url: str = ""
+    is_mock: bool = False
+    data_mode: str = "unavailable"
+    retrieved_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
-class PressRelease:
+class PressRelease(DataProvenance):
     """公司新闻稿"""
     symbol: str
     title: str
@@ -47,7 +53,7 @@ class PressRelease:
 
 
 @dataclass
-class SocialMediaPost:
+class SocialMediaPost(DataProvenance):
     """社媒帖子"""
     platform: str  # twitter, reddit, discord, etc.
     author: str
@@ -79,135 +85,106 @@ class NewsDataSource(ABC):
         pass
 
 
-class YahooFinanceNews(NewsDataSource):
-    """Yahoo Finance 新闻源 (示例实现)"""
+class UnavailableNewsSource(NewsDataSource):
+    provider_name = "unconfigured"
 
-    def get_news(self, symbol: str, limit: int = 10) -> List[NewsItem]:
-        # 实际实现需要调用 Yahoo Finance API
-        return [
-            NewsItem(
-                id="1",
-                symbol=symbol,
-                title=f"{symbol} beats earnings expectations",
-                summary="Company reported strong Q2 results...",
-                source="Yahoo Finance",
-                author="John Doe",
-                url="https://finance.yahoo.com/news/...",
-                published_at=datetime.now(),
-                sentiment=Sentiment.POSITIVE,
-                sentiment_score=0.7,
-                relevance_score=0.9,
-                keywords=["earnings", "beat", "strong"],
-            ),
-            NewsItem(
-                id="2",
-                symbol=symbol,
-                title=f"Analyst upgrades {symbol}",
-                summary="Following strong results...",
-                source="Bloomberg",
-                author="Jane Smith",
-                url="https://bloomberg.com/...",
-                published_at=datetime.now(),
-                sentiment=Sentiment.POSITIVE,
-                sentiment_score=0.5,
-                relevance_score=0.8,
-                keywords=["upgrade", "analyst", "rating"],
-            ),
-        ]
+    def get_news(self, symbol, limit=10):
+        validate_symbol(symbol)
+        validate_limit(limit)
+        raise DataUnavailableError(f"{self.provider_name}: news is not connected")
 
-    def get_press_releases(self, symbol: str, limit: int = 10) -> List[PressRelease]:
-        return [
-            PressRelease(
-                symbol=symbol,
-                title=f"{symbol} Reports Q2 2025 Financial Results",
-                content="Company announces Q2 revenue of $26B...",
-                release_type="earnings",
-                url="https://example.com/pr/...",
-                published_at=datetime.now(),
-            )
-        ]
+    def get_press_releases(self, symbol, limit=10):
+        validate_symbol(symbol)
+        validate_limit(limit)
+        raise DataUnavailableError(f"{self.provider_name}: press releases are not connected")
 
-    def search_news(self, query: str, limit: int = 10) -> List[NewsItem]:
-        return []
+    def search_news(self, query, limit=10):
+        validate_limit(limit)
+        if not isinstance(query, str) or not query.strip():
+            raise ValueError("query must be a nonempty string")
+        raise DataUnavailableError(f"{self.provider_name}: news search is not connected")
 
 
-class SeekingAlphaNews(NewsDataSource):
-    """Seeking Alpha 新闻源 (示例实现)"""
+class YahooFinanceNews(UnavailableNewsSource):
+    provider_name = "yahoo"
 
-    def get_news(self, symbol: str, limit: int = 10) -> List[NewsItem]:
-        return []
 
-    def get_press_releases(self, symbol: str, limit: int = 10) -> List[PressRelease]:
-        return []
+class SeekingAlphaNews(UnavailableNewsSource):
+    provider_name = "seeking_alpha"
 
-    def search_news(self, query: str, limit: int = 10) -> List[NewsItem]:
-        return []
+
+class MockNewsSource(NewsDataSource):
+    def __init__(self, *, enabled=False):
+        if enabled is not True:
+            raise DataUnavailableError("MockNewsSource requires enabled=True")
+
+    def get_news(self, symbol, limit=10):
+        symbol = validate_symbol(symbol)
+        validate_limit(limit)
+        return [NewsItem(f"mock-{symbol}", symbol, f"[MOCK] Synthetic news for {symbol}",
+                         "Synthetic fixture, not an actual event.", "mock", None,
+                         "https://example.invalid/bshl/mock/news", MOCK_TIME,
+                         Sentiment.NEUTRAL, 0.0, 1.0, ["mock"],
+                         **{k: v for k, v in mock_metadata("news").items() if k != "source"})]
+
+    def get_press_releases(self, symbol, limit=10):
+        symbol = validate_symbol(symbol)
+        validate_limit(limit)
+        return [PressRelease(symbol, f"[MOCK] {symbol} synthetic release",
+                             "Synthetic fixture, not a company announcement.", "mock",
+                             "https://example.invalid/bshl/mock/release", MOCK_TIME,
+                             **mock_metadata("release"))]
+
+    def search_news(self, query, limit=10):
+        raise DataUnavailableError("mock search is unsupported; select a ticker fixture explicitly")
 
 
 class NewsDataManager:
-    """新闻数据管理器"""
+    def __init__(self, *, enable_mock=False):
+        if not isinstance(enable_mock, bool):
+            raise ValueError("enable_mock must be an explicit boolean")
+        self.sources = {"yahoo": YahooFinanceNews(), "seeking_alpha": SeekingAlphaNews()}
+        if enable_mock:
+            self.sources["mock"] = MockNewsSource(enabled=True)
 
-    def __init__(self):
-        self.sources: Dict[str, NewsDataSource] = {}
-        self._init_default_sources()
-
-    def _init_default_sources(self):
-        """初始化默认数据源"""
-        self.sources["yahoo"] = YahooFinanceNews()
-        self.sources["seeking_alpha"] = SeekingAlphaNews()
-
-    def register_source(self, name: str, source: NewsDataSource):
-        """注册数据源"""
+    def register_source(self, name, source):
+        if not name or not isinstance(source, NewsDataSource):
+            raise ValueError("register a named NewsDataSource")
         self.sources[name] = source
 
-    def get_source(self, name: str) -> Optional[NewsDataSource]:
-        """获取数据源"""
-        return self.sources.get(name)
+    def get_source(self, name):
+        if name not in self.sources:
+            raise DataUnavailableError(f"news provider {name!r} is not registered")
+        return self.sources[name]
 
-    def get_news(self, symbol: str, limit: int = 10, source: str = "yahoo") -> List[NewsItem]:
-        """获取新闻"""
-        source_obj = self.get_source(source)
-        if source_obj:
-            return source_obj.get_news(symbol, limit)
-        return []
+    def get_news(self, symbol, limit=10, source="yahoo"):
+        return self.get_source(source).get_news(symbol, limit)
 
-    def get_press_releases(self, symbol: str, limit: int = 10, source: str = "yahoo") -> List[PressRelease]:
-        """获取公司新闻稿"""
-        source_obj = self.get_source(source)
-        if source_obj:
-            return source_obj.get_press_releases(symbol, limit)
-        return []
+    def get_press_releases(self, symbol, limit=10, source="yahoo"):
+        return self.get_source(source).get_press_releases(symbol, limit)
 
-    def search_news(self, query: str, limit: int = 10, source: str = "yahoo") -> List[NewsItem]:
-        """搜索新闻"""
-        source_obj = self.get_source(source)
-        if source_obj:
-            return source_obj.search_news(query, limit)
-        return []
+    def search_news(self, query, limit=10, source="yahoo"):
+        return self.get_source(source).search_news(query, limit)
 
-    def get_all_news(self, symbol: str, limit: int = 10) -> List[NewsItem]:
-        """从所有数据源获取新闻"""
+    def get_all_news(self, symbol, limit=10):
+        """Unavailable sources fail explicitly; never silently combine mock with live."""
+        validate_limit(limit)
         all_news = []
-        for source_name, source_obj in self.sources.items():
-            news = source_obj.get_news(symbol, limit)
-            all_news.extend(news)
-        # 按时间排序
-        all_news.sort(key=lambda x: x.published_at, reverse=True)
+        for name, provider in self.sources.items():
+            if name == "mock":
+                continue
+            all_news.extend(provider.get_news(symbol, limit))
+        all_news.sort(key=lambda item: item.published_at, reverse=True)
         return all_news[:limit]
 
 
-# 全局实例
 news_data_manager = NewsDataManager()
 
 
 def main():
-    """示例用法"""
-    # 获取新闻
-    news = news_data_manager.get_news("NVDA", limit=5)
+    news = NewsDataManager(enable_mock=True).get_news("DEMO", source="mock")
     for item in news:
-        print(f"[{item.source}] {item.title}")
-        print(f"  情绪: {item.sentiment.value if item.sentiment else 'N/A'}")
-        print(f"  相关性: {item.relevance_score:.2f}")
+        print(f"[{item.data_mode} / {item.published_at.isoformat()}] {item.title}")
 
 
 if __name__ == "__main__":

@@ -6,12 +6,16 @@
   "properties": {
     "ticker": {
       "type": "string",
-      "description": "标的代码"
+      "description": "标的代码",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "date": {
       "type": "string",
       "format": "date",
-      "description": "检查日期"
+      "description": "检查日期",
+      "minLength": 1,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "checklist": {
       "type": "object",
@@ -19,85 +23,248 @@
         "liquidity": {
           "type": "object",
           "properties": {
-            "status": {"type": "boolean"},
-            "detail": {"type": "string"},
-            "daily_volume": {"type": "number"}
-          }
+            "status": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "daily_volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "status",
+            "detail"
+          ]
         },
         "volatility": {
           "type": "object",
           "properties": {
-            "status": {"type": "boolean"},
-            "detail": {"type": "string"},
-            "atr_percent": {"type": "number"}
-          }
+            "status": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "atr_percent": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "status",
+            "detail"
+          ]
         },
         "evidence_quality": {
           "type": "object",
           "properties": {
-            "status": {"type": "boolean"},
-            "detail": {"type": "string"},
-            "strong_count": {"type": "integer"},
-            "medium_count": {"type": "integer"}
-          }
+            "status": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "strong_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "medium_count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "status",
+            "detail"
+          ]
         },
         "social_crowding": {
           "type": "object",
           "properties": {
-            "status": {"type": "boolean"},
-            "detail": {"type": "string"},
+            "status": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
             "level": {
               "type": "string",
-              "enum": ["EXTREME", "HIGH", "MODERATE", "LOW"]
+              "enum": [
+                "EXTREME",
+                "HIGH",
+                "MODERATE",
+                "LOW"
+              ]
             }
-          }
+          },
+          "required": [
+            "status",
+            "detail"
+          ]
         },
         "earnings_risk": {
           "type": "object",
           "properties": {
-            "status": {"type": "boolean"},
-            "detail": {"type": "string"},
-            "days_to_earnings": {"type": "integer"}
-          }
+            "status": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "days_to_earnings": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "status",
+            "detail"
+          ]
         },
         "regulatory_uncertainty": {
           "type": "object",
           "properties": {
-            "status": {"type": "boolean"},
-            "detail": {"type": "string"}
-          }
+            "status": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "status",
+            "detail"
+          ]
         },
         "price_location": {
           "type": "object",
           "properties": {
-            "status": {"type": "boolean"},
-            "detail": {"type": "string"},
-            "distance_from_ma20_atr": {"type": "number"}
-          }
+            "status": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "distance_from_ma20_atr": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "status",
+            "detail"
+          ]
         },
         "stop_loss_distance": {
           "type": "object",
           "properties": {
-            "status": {"type": "boolean"},
-            "detail": {"type": "string"},
-            "distance_percent": {"type": "number"}
-          }
+            "status": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "distance_percent": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "status",
+            "detail"
+          ]
         },
         "position_exposure": {
           "type": "object",
           "properties": {
-            "status": {"type": "boolean"},
-            "detail": {"type": "string"},
-            "suggested_percent": {"type": "number"}
-          }
+            "status": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "suggested_percent": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "status",
+            "detail"
+          ]
         },
         "correlation": {
           "type": "object",
           "properties": {
-            "status": {"type": "boolean"},
-            "detail": {"type": "string"},
-            "correlation_coefficient": {"type": "number"}
-          }
+            "status": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "correlation_coefficient": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "status",
+            "detail"
+          ]
         }
       }
     },
@@ -106,38 +273,231 @@
       "items": {
         "type": "object",
         "properties": {
-          "condition": {"type": "string"},
+          "condition": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
           "severity": {
             "type": "string",
-            "enum": ["CRITICAL", "HIGH", "MODERATE", "LOW"]
+            "enum": [
+              "CRITICAL",
+              "HIGH",
+              "MODERATE",
+              "LOW"
+            ]
           },
-          "description": {"type": "string"}
-        }
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "condition",
+          "severity",
+          "description"
+        ]
       }
     },
     "decision": {
       "type": "string",
-      "enum": ["Pass", "Reduce Size", "Watch Only", "Wait Confirmation", "Wait", "Veto"],
+      "enum": [
+        "Pass",
+        "Reduce Size",
+        "Watch Only",
+        "Wait Confirmation",
+        "Wait",
+        "Veto"
+      ],
       "description": "风控决策"
     },
     "reasoning": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
       "description": "决策理由"
     },
     "suggested_action": {
       "type": "string",
-      "description": "建议动作"
+      "description": "建议动作",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "risk_warning": {
       "type": "string",
-      "description": "风险提示"
+      "description": "风险提示",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "expiration_conditions": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
       "description": "判断失效条件"
+    },
+    "schema_version": {
+      "const": "0.6"
+    },
+    "data_mode": {
+      "type": "string",
+      "enum": [
+        "live",
+        "csv",
+        "mock",
+        "unavailable"
+      ]
+    },
+    "is_mock": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
     }
   },
-  "required": ["ticker", "date", "decision"]
+  "required": [
+    "ticker",
+    "date",
+    "decision"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "Pass"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "required": [
+          "checklist",
+          "triggered_conditions",
+          "reasoning",
+          "data_mode",
+          "is_mock",
+          "source",
+          "as_of"
+        ],
+        "properties": {
+          "data_mode": {
+            "enum": [
+              "live",
+              "csv"
+            ]
+          },
+          "is_mock": {
+            "const": false
+          },
+          "reasoning": {
+            "minItems": 1
+          },
+          "triggered_conditions": {
+            "maxItems": 0
+          },
+          "checklist": {
+            "required": [
+              "liquidity",
+              "volatility",
+              "evidence_quality",
+              "social_crowding",
+              "earnings_risk",
+              "regulatory_uncertainty",
+              "price_location",
+              "stop_loss_distance",
+              "position_exposure",
+              "correlation"
+            ],
+            "properties": {
+              "liquidity": {
+                "properties": {
+                  "status": {
+                    "const": true
+                  }
+                }
+              },
+              "volatility": {
+                "properties": {
+                  "status": {
+                    "const": true
+                  }
+                }
+              },
+              "evidence_quality": {
+                "properties": {
+                  "status": {
+                    "const": true
+                  }
+                }
+              },
+              "social_crowding": {
+                "properties": {
+                  "status": {
+                    "const": true
+                  }
+                }
+              },
+              "earnings_risk": {
+                "properties": {
+                  "status": {
+                    "const": true
+                  }
+                }
+              },
+              "regulatory_uncertainty": {
+                "properties": {
+                  "status": {
+                    "const": true
+                  }
+                }
+              },
+              "price_location": {
+                "properties": {
+                  "status": {
+                    "const": true
+                  }
+                }
+              },
+              "stop_loss_distance": {
+                "properties": {
+                  "status": {
+                    "const": true
+                  }
+                }
+              },
+              "position_exposure": {
+                "properties": {
+                  "status": {
+                    "const": true
+                  }
+                }
+              },
+              "correlation": {
+                "properties": {
+                  "status": {
+                    "const": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

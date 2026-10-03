@@ -7,6 +7,7 @@ BSHL Alpha Skill - Alpha Thesis Score Calculator
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+from .validation import score_values
 
 
 class Grade(Enum):
@@ -82,6 +83,7 @@ class AlphaThesisScorer:
             AlphaThesisScore: 完整评分结果
         """
 
+        score_values(locals(), self.weights)
         # 计算总分
         total = (
             demand_inflection +

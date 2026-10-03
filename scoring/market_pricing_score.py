@@ -7,6 +7,7 @@ BSHL Alpha Skill - Market Pricing Score Calculator
 from typing import Dict, List
 from dataclasses import dataclass
 from enum import Enum
+from .validation import score_values
 
 
 @dataclass
@@ -71,6 +72,7 @@ class MarketPricingScorer:
             MarketPricingScore: 完整评分结果
         """
 
+        score_values(locals(), self.weights)
         # 计算总分
         total = (
             sector_trend +

@@ -6,6 +6,7 @@ BSHL Alpha Skill - Replay Package
 
 from .case_library import (
     ReplayCase,
+    DecisionSnapshot,
     CaseType,
     CaseOutcome,
     ReplayCaseLibrary,
@@ -34,6 +35,7 @@ from .personal_evolution import (
 __all__ = [
     # Case Library
     "ReplayCase",
+    "DecisionSnapshot",
     "CaseType",
     "CaseOutcome",
     "ReplayCaseLibrary",

@@ -1,15 +1,16 @@
 """
 BSHL Alpha Skill - Replay Engine
 
-回放引擎，用于历史回测和规则验证。
+Legacy case-snapshot simulation, not a bar-based backtest or execution model.
 """
 
 from typing import Dict, List, Optional, Callable
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
 import json
+import math
 
-from .case_library import ReplayCase, CaseType, CaseOutcome, ReplayCaseLibrary
+from .case_library import ReplayCase, DecisionSnapshot, CaseOutcome, ReplayCaseLibrary, replay_case_library
 
 
 @dataclass
@@ -20,6 +21,15 @@ class ReplayConfig:
     symbols: List[str]
     initial_capital: float
     commission_rate: float = 0.001
+
+    def __post_init__(self):
+        if self.start_date > self.end_date:
+            raise ValueError("start_date must not exceed end_date")
+        if (isinstance(self.initial_capital, bool) or not math.isfinite(self.initial_capital)
+                or self.initial_capital <= 0):
+            raise ValueError("initial_capital must be finite and positive")
+        if not math.isfinite(self.commission_rate) or not 0 <= self.commission_rate < 1:
+            raise ValueError("commission_rate must be in [0, 1)")
 
 
 @dataclass
@@ -44,8 +54,14 @@ class Portfolio:
         """计算组合价值"""
         value = self.cash
         for symbol, shares in self.positions.items():
-            if symbol in prices:
-                value += prices[symbol] * shares
+            if not shares:
+                continue
+            if symbol not in prices:
+                raise ValueError(f"missing valuation price: {symbol}")
+            price = prices[symbol]
+            if not math.isfinite(price) or price <= 0:
+                raise ValueError(f"invalid valuation price: {symbol}")
+            value += price * shares
         return value
 
 
@@ -63,12 +79,14 @@ class ReplayEngine:
         self.replay_log: List[Dict] = []
 
     def replay(self) -> Dict:
-        """执行回放"""
+        """Rebuild an illustrative case simulation on every call."""
+        self.portfolio = Portfolio(self.config.initial_capital, {}, [])
+        self.replay_log = []
         # 获取时间范围内的所有案例
         cases = self._get_cases_in_range()
 
         # 按时间排序
-        cases.sort(key=lambda c: c.original_date)
+        cases.sort(key=lambda c: (c.original_date, c.id))
 
         # 逐个回放
         for case in cases:
@@ -88,6 +106,11 @@ class ReplayEngine:
 
     def _replay_case(self, case: ReplayCase):
         """回放单个案例"""
+        if not math.isfinite(case.original_price) or case.original_price <= 0:
+            raise ValueError(f"invalid original price: {case.id}")
+        if case.outcome_date < case.original_date:
+            raise ValueError(f"outcome precedes decision: {case.id}")
+        observed = case.outcome_date <= self.config.end_date
         # 记录日志
         log_entry = {
             "case_id": case.id,
@@ -96,9 +119,10 @@ class ReplayEngine:
             "original_price": case.original_price,
             "original_status": case.original_status,
             "action": "NONE",
-            "outcome_price": case.outcome_price,
-            "outcome": case.outcome.value,
-            "price_change": case.price_change_percent,
+            "outcome_price": case.outcome_price if observed else None,
+            "outcome": case.outcome.value if observed else None,
+            "price_change": case.price_change_percent if observed else None,
+            "outcome_available": observed,
         }
 
         # 根据原始状态决定动作
@@ -164,11 +188,16 @@ class ReplayEngine:
     def _generate_report(self, cases: List[ReplayCase]) -> Dict:
         """生成回放报告"""
         # 计算最终组合价值
-        final_prices = {case.symbol: case.outcome_price for case in cases}
-        final_value = self.portfolio.get_value(final_prices)
+        observed = sorted((case for case in cases if case.outcome_date <= self.config.end_date),
+                          key=lambda c: (c.outcome_date, c.id))
+        final_prices = {case.symbol: case.outcome_price for case in observed}
+        missing_prices = sorted(symbol for symbol, shares in self.portfolio.positions.items()
+                                if shares and symbol not in final_prices)
+        final_value = None if missing_prices else self.portfolio.get_value(final_prices)
 
         # 计算收益
-        total_return = (final_value - self.config.initial_capital) / self.config.initial_capital
+        total_return = ((final_value - self.config.initial_capital) / self.config.initial_capital
+                        if final_value is not None else None)
 
         # 统计交易
         total_trades = len(self.portfolio.trades)
@@ -177,10 +206,15 @@ class ReplayEngine:
 
         # 统计成功率
         executed_trades = [log for log in self.replay_log if log["action"] in ["BOUGHT", "SOLD"]]
-        successful_trades = sum(1 for log in executed_trades if log.get("price_change", 0) > 0)
-        success_rate = successful_trades / len(executed_trades) if executed_trades else 0
+        resolved_trades = [log for log in executed_trades if log["outcome_available"]]
+        successful_trades = sum(1 for log in resolved_trades if log["price_change"] > 0)
+        success_rate = successful_trades / len(resolved_trades) if resolved_trades else None
 
         return {
+            "mode": "legacy_case_snapshot_simulation",
+            "performance_validated": False,
+            "limitations": ["No bar sequence, exit rules or slippage model",
+                            "Valuation uses last observed case outcome, not an end-date market quote"],
             "config": {
                 "start_date": self.config.start_date.isoformat(),
                 "end_date": self.config.end_date.isoformat(),
@@ -190,13 +224,17 @@ class ReplayEngine:
             "performance": {
                 "final_value": final_value,
                 "total_return": total_return,
-                "total_return_pct": total_return * 100,
+                "total_return_pct": total_return * 100 if total_return is not None else None,
+                "valuation_status": "unknown" if missing_prices else "illustrative",
+                "missing_prices": missing_prices,
+                "valuation_dates": {case.symbol: case.outcome_date.isoformat() for case in observed},
             },
             "trades": {
                 "total": total_trades,
                 "buy": buy_trades,
                 "sell": sell_trades,
-                "success_rate": success_rate * 100,
+                "success_rate": success_rate * 100 if success_rate is not None else None,
+                "resolved_cases": len(resolved_trades),
             },
             "cases": {
                 "total": len(cases),
@@ -213,7 +251,8 @@ class RuleTester:
     def __init__(self, case_library: ReplayCaseLibrary):
         self.case_library = case_library
 
-    def test_rule(self, rule: Callable[[ReplayCase], bool]) -> Dict:
+    def test_rule(self, rule: Callable[[DecisionSnapshot], bool],
+                  rule_id: Optional[str] = None, min_cases: int = 30) -> Dict:
         """测试规则
 
         Args:
@@ -222,13 +261,19 @@ class RuleTester:
         Returns:
             测试结果
         """
-        cases = self.case_library.get_all_cases()
+        if min_cases < 1:
+            raise ValueError("min_cases must be positive")
+        cases = [case for case in self.case_library.get_all_cases()
+                 if rule_id is None or rule_id in case.rule_ids]
 
         # 应用规则
         passed = []
         failed = []
         for case in cases:
-            if rule(case):
+            decision = rule(case.decision_snapshot())
+            if not isinstance(decision, bool):
+                raise ValueError("rule must return a boolean")
+            if decision:
                 passed.append(case)
             else:
                 failed.append(case)
@@ -244,6 +289,9 @@ class RuleTester:
         filter_rate = filtered_failure / len(failure_cases) if failure_cases else 0
 
         return {
+            "mode": "case_rule_diagnostics",
+            "status": "insufficient" if len(cases) < min_cases else "diagnostic_only",
+            "performance_validated": False,
             "rule_applied": len(passed) + len(failed),
             "passed": len(passed),
             "failed": len(failed),
@@ -276,14 +324,14 @@ def main():
     print("=== BSHL Alpha Skill 回放报告 ===\n")
     print(f"回放期间: {report['config']['start_date']} 至 {report['config']['end_date']}")
     print(f"初始资金: ${report['config']['initial_capital']:,.2f}")
-    print(f"最终价值: ${report['performance']['final_value']:,.2f}")
-    print(f"总收益率: {report['performance']['total_return_pct']:+.2f}%")
+    print(f"案例估值: {report['performance']['final_value']}")
+    print(f"示意收益率: {report['performance']['total_return_pct']}")
 
     print(f"\n交易统计:")
     print(f"  总交易: {report['trades']['total']}")
     print(f"  买入: {report['trades']['buy']}")
     print(f"  卖出: {report['trades']['sell']}")
-    print(f"  成功率: {report['trades']['success_rate']:.1f}%")
+    print(f"  案例成功率: {report['trades']['success_rate']}")
 
     print(f"\n案例统计:")
     print(f"  总案例: {report['cases']['total']}")

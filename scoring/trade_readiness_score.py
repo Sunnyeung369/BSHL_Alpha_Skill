@@ -4,9 +4,10 @@ BSHL Alpha Skill - Trade Readiness Score Calculator
 计算交易准备评分，评估现在能否进入交易准备。
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+from .validation import optional_bool, score_values
 
 
 class TradeStatus(Enum):
@@ -38,6 +39,8 @@ class TradeReadinessScore:
     breakdown: TradeScoreBreakdown
     reasoning: List[str]
     action: str
+    closed_bar_confirmed: Optional[bool] = None
+    stop_loss_defined: Optional[bool] = None
 
 
 class TradeReadinessScorer:
@@ -65,6 +68,8 @@ class TradeReadinessScorer:
         stop_loss_clarity: float,
         reward_risk: float,
         volatility_controlled: float,
+        closed_bar_confirmed: Optional[bool] = None,
+        stop_loss_defined: Optional[bool] = None,
     ) -> TradeReadinessScore:
         """
         计算交易准备评分
@@ -83,6 +88,9 @@ class TradeReadinessScorer:
             TradeReadinessScore: 完整评分结果
         """
 
+        score_values(locals(), self.weights)
+        optional_bool("closed_bar_confirmed", closed_bar_confirmed)
+        optional_bool("stop_loss_defined", stop_loss_defined)
         # 计算总分
         total = (
             parent_cycle_direction +
@@ -96,7 +104,13 @@ class TradeReadinessScorer:
         )
 
         # 确定状态
-        if total >= 85:
+        if stop_loss_clarity < 10 or stop_loss_defined is False:
+            status = TradeStatus.NO_TRADE
+        elif closed_bar_confirmed is not True or stop_loss_defined is not True:
+            status = TradeStatus.WAIT
+        elif breakout_confirmation < 13:
+            status = TradeStatus.WAIT
+        elif total >= 85:
             status = TradeStatus.TRADE_READY
         elif total >= 70:
             status = TradeStatus.WATCH_CLOSELY
@@ -119,6 +133,10 @@ class TradeReadinessScorer:
 
         # 生成推理和行动建议
         reasoning = self._generate_reasoning(breakdown)
+        if closed_bar_confirmed is not True:
+            reasoning.append("收盘确认缺失或尚未完成，不升级交易准备")
+        if stop_loss_defined is not True:
+            reasoning.append("实际止损位尚未确认，不进入执行准备")
         action = self._generate_action(status, breakdown)
 
         return TradeReadinessScore(
@@ -127,6 +145,8 @@ class TradeReadinessScorer:
             breakdown=breakdown,
             reasoning=reasoning,
             action=action,
+            closed_bar_confirmed=closed_bar_confirmed,
+            stop_loss_defined=stop_loss_defined,
         )
 
     def _generate_reasoning(self, breakdown: TradeScoreBreakdown) -> List[str]:

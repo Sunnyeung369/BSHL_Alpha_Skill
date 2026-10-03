@@ -4,8 +4,8 @@ BSHL Alpha Skill - Replay Case Library
 回放案例库，用于验证规则有效性。
 """
 
-from typing import Dict, List, Optional
-from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional, Tuple
+from dataclasses import dataclass, field
 from datetime import datetime, date
 from enum import Enum
 
@@ -29,6 +29,28 @@ class CaseOutcome(Enum):
     SUCCESS = "success"
     FAILURE = "failure"
     PARTIAL = "partial"
+
+
+@dataclass(frozen=True)
+class DecisionSnapshot:
+    """Decision-time fields only. Outcome fields and post-hoc titles are excluded.
+
+The caller must still provide point-in-time evidence; field separation alone
+cannot prove that a manually supplied thesis was known at the decision date.
+"""
+    id: str
+    symbol: str
+    asset_class: str
+    original_date: date
+    original_price: float
+    original_status: str
+    alpha_thesis_score: float
+    market_pricing_score: float
+    trade_readiness_score: float
+    risk_governor_decision: str
+    thesis: str
+    key_evidence: Tuple[str, ...]
+    market_regime: str
 
 
 @dataclass
@@ -65,6 +87,14 @@ class ReplayCase:
     success_reasons: List[str]
     failure_reasons: List[str]
     lessons_learned: List[str]
+    rule_ids: List[str] = field(default_factory=list)
+    is_fixture: bool = True
+
+    def decision_snapshot(self) -> DecisionSnapshot:
+        return DecisionSnapshot(self.id, self.symbol, self.asset_class, self.original_date,
+            self.original_price, self.original_status, self.alpha_thesis_score,
+            self.market_pricing_score, self.trade_readiness_score, self.risk_governor_decision,
+            self.thesis, tuple(self.key_evidence), self.market_regime)
 
 
 class ReplayCaseLibrary:
@@ -101,6 +131,7 @@ class ReplayCaseLibrary:
             success_reasons=["逻辑判断正确", "证据准确"],
             failure_reasons=["市场定价程度低估", "拥挤度评估不足"],
             lessons_learned=["即使逻辑好，已定价的标的也要谨慎"],
+            rule_ids=["PRICING_CROWDED_SKIP"],
         )
         self.cases[case.id] = case
 
@@ -148,51 +179,36 @@ class RuleValidator:
         self.case_library = case_library
         self.validation_results: Dict[str, Dict] = {}
 
-    def validate_rule(self, rule_id: str, rule_description: str) -> Dict:
-        """验证规则有效性"""
-        # 找到相关案例
-        relevant_cases = self._find_relevant_cases(rule_id)
-
-        if not relevant_cases:
-            return {
-                "rule_id": rule_id,
-                "valid": False,
-                "reason": "No relevant cases found",
-                "cases_tested": 0,
-            }
-
-        # 计算规则有效性
-        success_count = sum(1 for c in relevant_cases if c.outcome == CaseOutcome.SUCCESS)
-        total_count = len(relevant_cases)
-        success_rate = success_count / total_count if total_count > 0 else 0
-
-        # 判断规则是否有效
-        is_valid = success_rate >= 0.6  # 60% 成功率为阈值
-
-        return {
-            "rule_id": rule_id,
-            "rule_description": rule_description,
-            "valid": is_valid,
-            "success_rate": success_rate,
-            "cases_tested": total_count,
-            "cases": [c.id for c in relevant_cases],
-            "recommendation": self._generate_recommendation(is_valid, success_rate),
-        }
+    def validate_rule(self, rule_id: str, rule_description: str,
+                      rule: Optional[Callable[[DecisionSnapshot], bool]] = None,
+                      min_cases: int = 30) -> Dict:
+        """Descriptive case diagnostics, never a claim of validated performance."""
+        if min_cases < 1:
+            raise ValueError("min_cases must be positive")
+        cases = self._find_relevant_cases(rule_id)
+        result = {"rule_id": rule_id, "rule_description": rule_description,
+            "valid": None, "status": "insufficient", "cases_tested": 0,
+            "cases": [case.id for case in cases], "success_rate": None,
+            "recommendation": "Insufficient evidence; require executable rule and out-of-sample evaluation"}
+        if not cases or rule is None:
+            return result
+        accepted = []
+        for case in cases:
+            decision = rule(case.decision_snapshot())
+            if not isinstance(decision, bool):
+                raise ValueError("rule must return a boolean")
+            if decision:
+                accepted.append(case)
+        result.update(cases_tested=len(cases), accepted_cases=[case.id for case in accepted],
+            success_rate=(sum(c.outcome == CaseOutcome.SUCCESS for c in accepted) / len(accepted)
+                          if accepted else None),
+            status="insufficient" if len(cases) < min_cases else "diagnostic_only",
+            fixture_cases=sum(c.is_fixture for c in cases))
+        return result
 
     def _find_relevant_cases(self, rule_id: str) -> List[ReplayCase]:
         """找到相关案例"""
-        # 简化实现：返回所有案例
-        # 实际实现需要根据规则 ID 匹配相关案例
-        return self.case_library.get_all_cases()
-
-    def _generate_recommendation(self, is_valid: bool, success_rate: float) -> str:
-        """生成建议"""
-        if is_valid:
-            return "规则有效，建议保留"
-        elif success_rate < 0.4:
-            return "规则失效，建议删除或修改"
-        else:
-            return "规则效果一般，建议优化"
+        return [case for case in self.case_library.get_all_cases() if rule_id in case.rule_ids]
 
     def validate_all_rules(self, rules: Dict[str, str]) -> Dict[str, Dict]:
         """验证所有规则"""
@@ -234,6 +250,9 @@ class PerformanceReport:
         avg_change = sum(c.price_change_percent for c in cases) / total_cases if total_cases > 0 else 0
 
         return {
+            "mode": "case_label_statistics",
+            "performance_validated": False,
+            "fixture_cases": sum(case.is_fixture for case in cases),
             "summary": {
                 "total_cases": total_cases,
                 "success": success_cases,

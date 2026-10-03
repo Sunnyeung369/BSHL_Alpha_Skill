@@ -6,35 +6,55 @@
   "properties": {
     "id": {
       "type": "string",
-      "description": "复盘唯一标识"
+      "description": "复盘唯一标识",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "ticker": {
       "type": "string",
-      "description": "标的代码"
+      "description": "标的代码",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "review_type": {
       "type": "string",
-      "enum": ["trade_completed", "observation_ended", "judgment_error", "rule_validation"],
+      "enum": [
+        "trade_completed",
+        "observation_ended",
+        "judgment_error",
+        "rule_validation"
+      ],
       "description": "复盘类型"
     },
     "review_date": {
       "type": "string",
       "format": "date",
-      "description": "复盘日期"
+      "description": "复盘日期",
+      "minLength": 1,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "original_analysis": {
       "type": "object",
       "properties": {
         "analysis_date": {
           "type": "string",
-          "format": "date"
+          "format": "date",
+          "minLength": 1,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
         },
         "price_at_analysis": {
           "type": "number"
         },
         "conclusion": {
           "type": "string",
-          "enum": ["Research Only", "Watchlist", "Trade Ready", "Wait Pullback", "Avoid", "Veto"]
+          "enum": [
+            "Research Only",
+            "Watchlist",
+            "Trade Ready",
+            "Wait Pullback",
+            "Avoid",
+            "Veto"
+          ]
         },
         "alpha_thesis_score": {
           "type": "number",
@@ -52,20 +72,32 @@
           "maximum": 100
         },
         "core_hypothesis": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "key_evidence": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
         },
         "market_regime": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "technical_structure": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "risk_governor": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "stop_loss": {
           "type": "number"
@@ -89,34 +121,65 @@
           "items": {
             "type": "object",
             "properties": {
-              "date": {"type": "string", "format": "date"},
-              "price": {"type": "number"},
-              "event": {"type": "string"}
+              "date": {
+                "type": "string",
+                "format": "date",
+                "minLength": 1,
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "price": {
+                "type": "number"
+              },
+              "event": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
             }
           }
         },
         "catalyst_realization": {
           "type": "object",
           "properties": {
-            "catalyst": {"type": "string"},
+            "catalyst": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
             "realized": {
               "type": "string",
-              "enum": ["realized", "partial", "not_realized"]
+              "enum": [
+                "realized",
+                "partial",
+                "not_realized"
+              ]
             },
             "impact": {
               "type": "string",
-              "enum": ["positive", "neutral", "negative"]
+              "enum": [
+                "positive",
+                "neutral",
+                "negative"
+              ]
             }
           }
         },
         "market_changes": {
           "type": "object",
           "properties": {
-            "index_change": {"type": "number"},
-            "sector_change": {"type": "number"},
+            "index_change": {
+              "type": "number"
+            },
+            "sector_change": {
+              "type": "number"
+            },
             "risk_appetite_change": {
               "type": "string",
-              "enum": ["improved", "stable", "deteriorated"]
+              "enum": [
+                "improved",
+                "stable",
+                "deteriorated"
+              ]
             }
           }
         }
@@ -130,8 +193,16 @@
           "items": {
             "type": "object",
             "properties": {
-              "aspect": {"type": "string"},
-              "reason": {"type": "string"}
+              "aspect": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
             }
           }
         },
@@ -140,8 +211,16 @@
           "items": {
             "type": "object",
             "properties": {
-              "aspect": {"type": "string"},
-              "reason": {"type": "string"}
+              "aspect": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
             }
           }
         },
@@ -150,10 +229,18 @@
           "items": {
             "type": "object",
             "properties": {
-              "evidence": {"type": "string"},
+              "evidence": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
               "validated": {
                 "type": "string",
-                "enum": ["validated", "partial", "invalidated"]
+                "enum": [
+                  "validated",
+                  "partial",
+                  "invalidated"
+                ]
               }
             }
           }
@@ -161,16 +248,48 @@
         "market_regime_judgment": {
           "type": "object",
           "properties": {
-            "correct": {"type": "array", "items": {"type": "string"}},
-            "incorrect": {"type": "array", "items": {"type": "string"}},
-            "reason": {"type": "string"}
+            "correct": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
+            "incorrect": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
           }
         },
         "technical_judgment": {
           "type": "object",
           "properties": {
-            "correct": {"type": "array", "items": {"type": "string"}},
-            "incorrect": {"type": "array", "items": {"type": "string"}},
+            "correct": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
+            "incorrect": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
             "early_warning": {
               "type": "boolean",
               "description": "K线是否提前预警"
@@ -188,7 +307,11 @@
             },
             "effectiveness": {
               "type": "string",
-              "enum": ["effective", "partial", "ineffective"]
+              "enum": [
+                "effective",
+                "partial",
+                "ineffective"
+              ]
             }
           }
         }
@@ -199,21 +322,37 @@
       "properties": {
         "success_factors": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
         },
         "failure_factors": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
         },
         "system_biases": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "bias": {"type": "string"},
+              "bias": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
               "impact": {
                 "type": "string",
-                "enum": ["high", "medium", "low"]
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
               }
             }
           }
@@ -227,23 +366,40 @@
         "properties": {
           "rule_type": {
             "type": "string",
-            "enum": ["new", "modified", "deleted"]
+            "enum": [
+              "new",
+              "modified",
+              "deleted"
+            ]
           },
           "rule_id": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
           },
           "condition": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
           },
           "action": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
           },
           "reasoning": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
           },
           "priority": {
             "type": "string",
-            "enum": ["critical", "high", "medium", "low"]
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
           }
         }
       }
@@ -253,15 +409,27 @@
       "properties": {
         "reusable_insights": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
         },
         "mistakes_to_avoid": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
         },
         "improvements_needed": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
         }
       }
     },
@@ -270,18 +438,33 @@
       "items": {
         "type": "object",
         "properties": {
-          "action": {"type": "string"},
+          "action": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
           "priority": {
             "type": "string",
-            "enum": ["critical", "high", "medium", "low"]
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "in_progress", "completed"]
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ]
           },
           "due_date": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "minLength": 1,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
           }
         }
       }
@@ -289,13 +472,46 @@
     "created_at": {
       "type": "string",
       "format": "date-time",
-      "description": "创建时间"
+      "description": "创建时间",
+      "minLength": 1
     },
     "updated_at": {
       "type": "string",
       "format": "date-time",
-      "description": "更新时间"
+      "description": "更新时间",
+      "minLength": 1
+    },
+    "schema_version": {
+      "const": "0.6"
+    },
+    "data_mode": {
+      "type": "string",
+      "enum": [
+        "live",
+        "csv",
+        "mock",
+        "unavailable"
+      ]
+    },
+    "is_mock": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
     }
   },
-  "required": ["id", "ticker", "review_type", "review_date", "original_analysis", "actual_outcome"]
+  "required": [
+    "id",
+    "ticker",
+    "review_type",
+    "review_date",
+    "original_analysis",
+    "actual_outcome"
+  ]
 }

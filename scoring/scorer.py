@@ -4,15 +4,17 @@ BSHL Alpha Skill - 统一评分入口
 提供统一的评分接口，整合所有评分模块。
 """
 
-from typing import Dict
-from alpha_thesis_score import AlphaThesisScorer, AlphaThesisScore
-from market_pricing_score import MarketPricingScorer, MarketPricingScore
-from trade_readiness_score import TradeReadinessScorer, TradeReadinessScore
-from risk_governor_score import RiskGovernorScorer, RiskGovernorScore
+from dataclasses import dataclass
+from datetime import date as calendar_date
+from typing import Optional
+from .alpha_thesis_score import AlphaThesisScorer, AlphaThesisScore, Grade
+from .market_pricing_score import MarketPricingScorer, MarketPricingScore
+from .trade_readiness_score import TradeReadinessScorer, TradeReadinessScore, TradeStatus
+from .risk_governor_score import RiskGovernorScorer, RiskGovernorScore, RiskDecision
 
 
 @dataclass
-class CompleteScore:
+class BSHLAlphaResult:
     """完整评分结果"""
     ticker: str
     date: str
@@ -23,7 +25,7 @@ class CompleteScore:
     final_status: str
 
 
-class BSHEAlphaScorer:
+class BSHLAlphaScorer:
     """BSHL Alpha 统一评分器"""
 
     def __init__(self):
@@ -73,9 +75,11 @@ class BSHEAlphaScorer:
         stop_ok: bool,
         position_ok: bool,
         correlation_ok: bool,
+        closed_bar_confirmed: Optional[bool] = None,
+        stop_loss_defined: Optional[bool] = None,
         # Risk Governor 详细说明
         **risk_details,
-    ) -> CompleteScore:
+    ) -> BSHLAlphaResult:
         """
         计算完整评分
 
@@ -83,6 +87,12 @@ class BSHEAlphaScorer:
             CompleteScore: 完整评分结果
         """
 
+        if not isinstance(ticker, str) or not ticker.strip():
+            raise ValueError("ticker must be a nonempty string")
+        if not isinstance(date, str):
+            raise TypeError("date must be an ISO date string")
+        if calendar_date.fromisoformat(date).isoformat() != date:
+            raise ValueError("date must use YYYY-MM-DD")
         # 计算各层评分
         alpha_thesis = self.alpha_scorer.score(
             demand_inflection=demand_inflection,
@@ -114,6 +124,8 @@ class BSHEAlphaScorer:
             stop_loss_clarity=stop_loss_clarity,
             reward_risk=reward_risk,
             volatility_controlled=volatility_controlled,
+            closed_bar_confirmed=closed_bar_confirmed,
+            stop_loss_defined=stop_loss_defined,
         )
 
         risk_governor = self.risk_scorer.check(
@@ -138,7 +150,7 @@ class BSHEAlphaScorer:
             risk_governor=risk_governor,
         )
 
-        return CompleteScore(
+        return BSHLAlphaResult(
             ticker=ticker,
             date=date,
             alpha_thesis=alpha_thesis,
@@ -157,29 +169,33 @@ class BSHEAlphaScorer:
     ) -> str:
         """确定最终状态"""
 
-        # Risk Governor 有一票否决权
-        if risk_governor.decision.value == "Veto":
+        # Hard constraints dominate soft scores. These are readiness gates,
+        # not calibrated probabilities of investment returns.
+        decision = risk_governor.decision
+        if decision is RiskDecision.VETO:
             return "Veto"
-        elif risk_governor.decision.value == "Watch Only":
+        if trade_readiness.status is TradeStatus.NO_TRADE:
+            return "Avoid"
+        if (decision is RiskDecision.WATCH_ONLY or alpha_thesis.grade is Grade.D
+                or alpha_thesis.breakdown.evidence_quality < 10):
             return "Research Only"
-
-        # 根据 Trade Readiness 确定状态
-        if trade_readiness.status.value == "No Trade":
-            return "No Trade"
-        elif trade_readiness.status.value == "Wait":
+        if decision is RiskDecision.WAIT:
             return "Wait Pullback"
-        elif trade_readiness.status.value == "Watch Closely":
+        if decision in (RiskDecision.WAIT_CONFIRMATION, RiskDecision.REDUCE_SIZE):
             return "Watchlist"
-        elif trade_readiness.status.value == "Trade Ready":
-            # 如果 Risk Governor 是 Reduce Size，降级为 Watchlist
-            if risk_governor.decision.value == "Reduce Size":
-                return "Watchlist"
+        if decision is not RiskDecision.PASS:
+            return "Research Only"
+        if trade_readiness.status is TradeStatus.WAIT:
+            return "Wait Pullback"
+        if trade_readiness.status is TradeStatus.WATCH_CLOSELY or market_pricing.grade == "D":
+            return "Watchlist"
+        if trade_readiness.status is TradeStatus.TRADE_READY:
             return "Trade Ready"
 
         # 默认为 Research Only
         return "Research Only"
 
-    def print_score(self, score: CompleteScore):
+    def print_score(self, score: BSHLAlphaResult):
         """打印评分结果"""
         print(f"\n{'='*60}")
         print(f"BSHL Alpha Skill 完整评分 - {score.ticker}")
@@ -217,9 +233,14 @@ class BSHEAlphaScorer:
         print(f"{'='*60}\n")
 
 
+# Compatibility with the original misspelled API and result name.
+BSHEAlphaScorer = BSHLAlphaScorer
+CompleteScore = BSHLAlphaResult
+
+
 def main():
     """示例用法"""
-    scorer = BSHEAlphaScorer()
+    scorer = BSHLAlphaScorer()
 
     # 示例评分
     result = scorer.score_complete(

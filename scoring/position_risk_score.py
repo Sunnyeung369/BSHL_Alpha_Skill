@@ -7,6 +7,7 @@ BSHL Alpha Skill - Position Risk Score Calculator
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+from .validation import number
 
 
 class RiskLevel(Enum):
@@ -37,6 +38,7 @@ class PositionRiskScore:
     reasoning: List[str]
     warnings: List[str]
     recommended_max_size: float
+    recommended_additional_size: float = 0.0
 
 
 class PositionRiskScorer:
@@ -72,6 +74,9 @@ class PositionRiskScorer:
         liquidity_risk: float,
         total_capital: float = 100000,
         current_position_size: Optional[float] = None,
+        stop_loss_fraction: Optional[float] = None,
+        risk_budget_fraction: float = 0.01,
+        liquidity_capital_limit: Optional[float] = None,
     ) -> PositionRiskScore:
         """
         计算仓位风险评分
@@ -84,12 +89,44 @@ class PositionRiskScorer:
             correlation_risk: 相关性风险评分 (0-10，10 表示无相关性风险)
             liquidity_risk: 流动性风险评分 (0-10，10 表示流动性充足)
             total_capital: 总资金
-            current_position_size: 当前仓位大小
+            current_position_size: 当前仓位金额，与 total_capital 同币种；默认根据百分比计算
+            stop_loss_fraction: 入场价到止损价的距离比例，0.05 表示 5%；未知时不建议新增仓位
+            risk_budget_fraction: 示例账户损失预算比例，默认 1%，未经收益校准
+            liquidity_capital_limit: 可选持仓金额上限，与 total_capital 同币种
+
+        Notes:
+            Exposure inputs include the existing position. recommended_max_size
+            is a total position cap; recommended_additional_size is an increment.
+            This long-only, unlevered sizing model does not model gap losses,
+            derivatives, execution costs or guaranteed stop execution.
 
         Returns:
             PositionRiskScore: 完整评分结果
         """
 
+        for name, value in (("single_position_size", single_position_size),
+                            ("sector_concentration", sector_concentration),
+                            ("total_exposure", total_exposure)):
+            number(name, value, 0, 1)
+        number("leverage_ratio", leverage_ratio, 1)
+        number("correlation_risk", correlation_risk, 0, 10)
+        number("liquidity_risk", liquidity_risk, 0, 10)
+        number("total_capital", total_capital, 0)
+        if total_capital == 0:
+            raise ValueError("total_capital must be positive")
+        number("risk_budget_fraction", risk_budget_fraction, 0, 1)
+        if stop_loss_fraction is not None:
+            number("stop_loss_fraction", stop_loss_fraction, 0, 1)
+            if stop_loss_fraction == 0:
+                raise ValueError("stop_loss_fraction must be positive")
+        if liquidity_capital_limit is not None:
+            number("liquidity_capital_limit", liquidity_capital_limit, 0)
+        current = single_position_size * total_capital if current_position_size is None else number(
+            "current_position_size", current_position_size, 0, total_capital)
+        if abs(current - single_position_size * total_capital) > 1e-8:
+            raise ValueError("current_position_size must match single_position_size * total_capital")
+        if current > sector_concentration * total_capital + 1e-8 or current > total_exposure * total_capital + 1e-8:
+            raise ValueError("sector_concentration and total_exposure must include current_position_size")
         # 计算单项评分
         single_score = self._score_single_position(single_position_size)
         sector_score = self._score_sector_concentration(sector_concentration)
@@ -131,7 +168,21 @@ class PositionRiskScorer:
         # 生成推理和警告
         reasoning = self._generate_reasoning(breakdown, single_position_size, sector_concentration, total_exposure, leverage_ratio)
         warnings = self._generate_warnings(breakdown, single_position_size, sector_concentration, total_exposure, leverage_ratio)
-        recommended_max_size = self._calculate_max_position_size(total_score, total_capital)
+        recommended_max_size = self._calculate_max_position_size(total, total_capital)
+        remaining_total = max(0, self.default_limits["max_total_exposure"] - total_exposure) * total_capital
+        remaining_sector = max(0, self.default_limits["max_sector_exposure"] - sector_concentration) * total_capital
+        recommended_max_size = min(recommended_max_size, current + remaining_total, current + remaining_sector)
+        if liquidity_capital_limit is not None:
+            recommended_max_size = min(recommended_max_size, liquidity_capital_limit)
+        if stop_loss_fraction is None:
+            recommended_max_size = min(recommended_max_size, current)
+            warnings.append("止损距离未知，不建议新增仓位")
+        else:
+            recommended_max_size = min(recommended_max_size, total_capital * risk_budget_fraction / stop_loss_fraction)
+        if leverage_ratio > 1 or correlation_risk < 5 or liquidity_risk < 5:
+            recommended_max_size = min(recommended_max_size, current)
+            warnings.append("杠杆、相关性或流动性限制未通过，不建议新增仓位")
+        recommended_additional_size = max(0, recommended_max_size - current)
 
         return PositionRiskScore(
             total=total,
@@ -140,6 +191,7 @@ class PositionRiskScorer:
             reasoning=reasoning,
             warnings=warnings,
             recommended_max_size=recommended_max_size,
+            recommended_additional_size=recommended_additional_size,
         )
 
     def _score_single_position(self, size: float) -> float:

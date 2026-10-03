@@ -9,7 +9,7 @@ from .market_pricing_score import MarketPricingScorer, MarketPricingScore
 from .trade_readiness_score import TradeReadinessScorer, TradeReadinessScore, TradeStatus
 from .risk_governor_score import RiskGovernorScorer, RiskGovernorScore, RiskDecision
 from .position_risk_score import PositionRiskScorer, PositionRiskScore, RiskLevel
-from .scorer import BSHLAlphaScorer, BSHLAlphaResult
+from .scorer import BSHLAlphaScorer, BSHLAlphaResult, BSHEAlphaScorer, CompleteScore
 
 __all__ = [
     # Alpha Thesis
@@ -34,4 +34,6 @@ __all__ = [
     # Main Scorer
     "BSHLAlphaScorer",
     "BSHLAlphaResult",
+    "BSHEAlphaScorer",
+    "CompleteScore",
 ]

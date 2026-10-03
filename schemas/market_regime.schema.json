@@ -7,11 +7,18 @@
     "date": {
       "type": "string",
       "format": "date",
-      "description": "评估日期"
+      "description": "评估日期",
+      "minLength": 1,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "market": {
       "type": "string",
-      "enum": ["US", "HK", "CN", "GLOBAL"],
+      "enum": [
+        "US",
+        "HK",
+        "CN",
+        "GLOBAL"
+      ],
       "description": "市场"
     },
     "index_trend": {
@@ -19,14 +26,26 @@
       "properties": {
         "status": {
           "type": "string",
-          "enum": ["UP", "CONSOLIDATION", "DOWN"]
+          "enum": [
+            "UP",
+            "CONSOLIDATION",
+            "DOWN"
+          ]
         },
-        "description": {"type": "string"},
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
         "key_levels": {
           "type": "object",
           "properties": {
-            "support": {"type": "number"},
-            "resistance": {"type": "number"}
+            "support": {
+              "type": "number"
+            },
+            "resistance": {
+              "type": "number"
+            }
           }
         }
       }
@@ -36,10 +55,22 @@
       "properties": {
         "status": {
           "type": "string",
-          "enum": ["STRONG", "NEUTRAL", "WEAK"]
+          "enum": [
+            "STRONG",
+            "NEUTRAL",
+            "WEAK"
+          ]
         },
-        "relative_strength": {"type": "string"},
-        "description": {"type": "string"}
+        "relative_strength": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
       }
     },
     "liquidity": {
@@ -47,11 +78,23 @@
       "properties": {
         "fed_policy": {
           "type": "string",
-          "enum": ["HAWKISH", "NEUTRAL", "DOVISH"]
+          "enum": [
+            "HAWKISH",
+            "NEUTRAL",
+            "DOVISH"
+          ]
         },
-        "treasury_yield": {"type": "number"},
-        "dxy": {"type": "number"},
-        "description": {"type": "string"}
+        "treasury_yield": {
+          "type": "number"
+        },
+        "dxy": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
       }
     },
     "risk_appetite": {
@@ -59,11 +102,23 @@
       "properties": {
         "status": {
           "type": "string",
-          "enum": ["RISK_ON", "NEUTRAL", "RISK_OFF"]
+          "enum": [
+            "RISK_ON",
+            "NEUTRAL",
+            "RISK_OFF"
+          ]
         },
-        "vix": {"type": "number"},
-        "high_yield_spread": {"type": "number"},
-        "description": {"type": "string"}
+        "vix": {
+          "type": "number"
+        },
+        "high_yield_spread": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
       }
     },
     "breadth": {
@@ -71,10 +126,19 @@
       "properties": {
         "status": {
           "type": "string",
-          "enum": ["BROAD", "NARROW"]
+          "enum": [
+            "BROAD",
+            "NARROW"
+          ]
         },
-        "advance_decline_ratio": {"type": "number"},
-        "description": {"type": "string"}
+        "advance_decline_ratio": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
       }
     },
     "theme_crowding": {
@@ -82,11 +146,28 @@
       "properties": {
         "level": {
           "type": "string",
-          "enum": ["EXTREME", "HIGH", "MODERATE", "LOW"]
+          "enum": [
+            "EXTREME",
+            "HIGH",
+            "MODERATE",
+            "LOW"
+          ]
         },
-        "social_volume": {"type": "string"},
-        "trading_volume": {"type": "string"},
-        "description": {"type": "string"}
+        "social_volume": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "trading_volume": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
       }
     },
     "options_sentiment": {
@@ -94,23 +175,76 @@
       "properties": {
         "status": {
           "type": "string",
-          "enum": ["EXCESSIVELY_BULLISH", "BULLISH", "NEUTRAL", "BEARISH", "EXCESSIVELY_BEARISH"]
+          "enum": [
+            "EXCESSIVELY_BULLISH",
+            "BULLISH",
+            "NEUTRAL",
+            "BEARISH",
+            "EXCESSIVELY_BEARISH"
+          ]
         },
-        "put_call_ratio": {"type": "number"},
-        "iv": {"type": "number"},
-        "iv_percentile": {"type": "number"},
-        "description": {"type": "string"}
+        "put_call_ratio": {
+          "type": "number"
+        },
+        "iv": {
+          "type": "number"
+        },
+        "iv_percentile": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
       }
     },
     "overall_regime": {
       "type": "string",
-      "enum": ["RISK_ON", "NEUTRAL", "RISK_OFF", "CROWDED", "ROTATION", "BREAKDOWN"],
+      "enum": [
+        "RISK_ON",
+        "NEUTRAL",
+        "RISK_OFF",
+        "CROWDED",
+        "ROTATION",
+        "BREAKDOWN"
+      ],
       "description": "综合市场状态"
     },
     "trading_strategy": {
       "type": "string",
-      "description": "基于市场状态的交易策略建议"
+      "description": "基于市场状态的交易策略建议",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "schema_version": {
+      "const": "0.6"
+    },
+    "data_mode": {
+      "type": "string",
+      "enum": [
+        "live",
+        "csv",
+        "mock",
+        "unavailable"
+      ]
+    },
+    "is_mock": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
     }
   },
-  "required": ["date", "market", "overall_regime"]
+  "required": [
+    "date",
+    "market",
+    "overall_regime"
+  ]
 }

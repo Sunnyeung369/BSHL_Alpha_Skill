@@ -6,61 +6,97 @@
   "properties": {
     "ticker": {
       "type": "string",
-      "description": "标的代码"
+      "description": "标的代码",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "name": {
       "type": "string",
-      "description": "标的名称"
+      "description": "标的名称",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "asset_class": {
       "type": "string",
-      "enum": ["US_STOCK", "HK_STOCK", "CN_STOCK", "ETF", "CRYPTO", "TOKEN"],
+      "enum": [
+        "US_STOCK",
+        "HK_STOCK",
+        "CN_STOCK",
+        "ETF",
+        "CRYPTO",
+        "TOKEN"
+      ],
       "description": "资产类别"
     },
     "date": {
       "type": "string",
       "format": "date",
-      "description": "分析日期"
+      "description": "分析日期",
+      "minLength": 1,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "core_hypothesis": {
       "type": "string",
-      "description": "核心假设"
+      "description": "核心假设",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "supply_chain_position": {
       "type": "string",
-      "description": "产业链位置"
+      "description": "产业链位置",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "demand_driver": {
       "type": "string",
-      "description": "需求驱动"
+      "description": "需求驱动",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "supply_constraint": {
       "type": "string",
-      "description": "供给约束"
+      "description": "供给约束",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "benefit_path": {
       "type": "string",
-      "description": "公司受益路径"
+      "description": "公司受益路径",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "catalyst": {
       "type": "string",
-      "description": "催化剂"
+      "description": "催化剂",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "time_window": {
       "type": "string",
-      "description": "时间窗口"
+      "description": "时间窗口",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "valuation_mismatch": {
       "type": "string",
-      "description": "估值错配"
+      "description": "估值错配",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "max_risk": {
       "type": "string",
-      "description": "最大风险"
+      "description": "最大风险",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "conclusion_grade": {
       "type": "string",
-      "enum": ["A", "B", "C", "D"],
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
       "description": "结论等级"
     },
     "alpha_thesis_score": {
@@ -73,71 +109,315 @@
         },
         "grade": {
           "type": "string",
-          "enum": ["A", "B", "C", "D"]
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
         },
         "breakdown": {
           "type": "object",
           "properties": {
-            "demand_inflection": {"type": "number"},
-            "supply_chain_bottleneck": {"type": "number"},
-            "company_benefit_certainty": {"type": "number"},
-            "evidence_quality": {"type": "number"},
-            "catalyst_timing": {"type": "number"},
-            "valuation_mismatch": {"type": "number"},
-            "competition": {"type": "number"},
-            "contradiction_clarity": {"type": "number"}
+            "demand_inflection": {
+              "type": "number"
+            },
+            "supply_chain_bottleneck": {
+              "type": "number"
+            },
+            "company_benefit_certainty": {
+              "type": "number"
+            },
+            "evidence_quality": {
+              "type": "number"
+            },
+            "catalyst_timing": {
+              "type": "number"
+            },
+            "valuation_mismatch": {
+              "type": "number"
+            },
+            "competition": {
+              "type": "number"
+            },
+            "contradiction_clarity": {
+              "type": "number"
+            }
           }
         }
       }
     },
     "evidence_ledger": {
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "object",
         "properties": {
-          "claim": {"type": "string"},
+          "id": {
+            "type": "string",
+            "description": "证据唯一标识",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "claim": {
+            "type": "string",
+            "description": "证据声明",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
           "source_type": {
             "type": "string",
-            "enum": ["filing", "transcript", "company_release", "industry_report", "media", "social"]
+            "enum": [
+              "filing",
+              "transcript",
+              "company_release",
+              "industry_report",
+              "media",
+              "social"
+            ],
+            "description": "来源类型"
           },
-          "source_date": {"type": "string"},
+          "source_name": {
+            "type": "string",
+            "description": "来源名称",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "source_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://[^\\s/]+(?:/[^\\s]*)?$",
+            "minLength": 10
+          },
+          "source_date": {
+            "type": "string",
+            "format": "date",
+            "description": "来源日期",
+            "minLength": 1,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
           "evidence_strength": {
             "type": "string",
-            "enum": ["strong", "medium", "weak", "stale"]
+            "enum": [
+              "strong",
+              "medium",
+              "weak",
+              "stale"
+            ],
+            "description": "证据强度"
           },
           "supports_or_refutes": {
             "type": "string",
-            "enum": ["supports", "refutes", "mixed"]
+            "enum": [
+              "supports",
+              "refutes",
+              "mixed"
+            ],
+            "description": "支持或反驳"
           },
           "affected_thesis": {
-            "type": "string",
-            "enum": ["demand", "supply", "margin", "valuation", "catalyst", "risk"]
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "demand",
+                "supply",
+                "margin",
+                "valuation",
+                "catalyst",
+                "risk"
+              ]
+            },
+            "description": "影响的论题",
+            "minItems": 1
           },
           "freshness": {
             "type": "string",
-            "enum": ["fresh", "aging", "stale"]
+            "enum": [
+              "fresh",
+              "aging",
+              "stale"
+            ],
+            "description": "新鲜度"
           },
-          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-          "kill_switch": {"type": "boolean"}
-        }
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "置信度"
+          },
+          "kill_switch": {
+            "type": "boolean",
+            "description": "是否为一票否决证据"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "description": "标签"
+          },
+          "notes": {
+            "type": "string",
+            "description": "备注",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "id",
+          "claim",
+          "source_type",
+          "source_name",
+          "source_url",
+          "source_date",
+          "evidence_strength",
+          "supports_or_refutes",
+          "freshness",
+          "confidence",
+          "kill_switch"
+        ]
       }
     },
     "contradiction_matrix": {
       "type": "object",
       "properties": {
-        "max_contradiction": {"type": "string"},
-        "alternative_explanation": {"type": "string"},
-        "kill_switch_evidence": {"type": "string"},
+        "max_contradiction": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "alternative_explanation": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "kill_switch_evidence": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
         "pending_questions": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
         }
       }
     },
     "status": {
       "type": "string",
-      "enum": ["Research Only", "Watchlist", "Trade Ready", "Wait Pullback", "Avoid", "Veto"]
+      "enum": [
+        "Research Only",
+        "Watchlist",
+        "Trade Ready",
+        "Wait Pullback",
+        "Avoid",
+        "Veto"
+      ]
+    },
+    "schema_version": {
+      "const": "0.6"
+    },
+    "data_mode": {
+      "type": "string",
+      "enum": [
+        "live",
+        "csv",
+        "mock",
+        "unavailable"
+      ]
+    },
+    "is_mock": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
     }
   },
-  "required": ["ticker", "name", "asset_class", "date", "core_hypothesis", "status"]
+  "required": [
+    "ticker",
+    "name",
+    "asset_class",
+    "date",
+    "core_hypothesis",
+    "status"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "Trade Ready"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "trade_readiness",
+          "risk_governor",
+          "data_mode",
+          "is_mock"
+        ],
+        "properties": {
+          "trade_readiness": {
+            "allOf": [
+              {
+                "$ref": "trade_readiness.schema.json"
+              },
+              {
+                "properties": {
+                  "overall_status": {
+                    "const": "Trade Ready"
+                  }
+                },
+                "required": [
+                  "overall_status"
+                ]
+              }
+            ]
+          },
+          "risk_governor": {
+            "allOf": [
+              {
+                "$ref": "risk_governor.schema.json"
+              },
+              {
+                "properties": {
+                  "decision": {
+                    "const": "Pass"
+                  }
+                },
+                "required": [
+                  "decision"
+                ]
+              }
+            ]
+          },
+          "data_mode": {
+            "enum": [
+              "live",
+              "csv"
+            ]
+          },
+          "is_mock": {
+            "const": false
+          }
+        }
+      }
+    }
+  ]
 }

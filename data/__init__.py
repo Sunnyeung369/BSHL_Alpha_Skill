@@ -7,8 +7,17 @@ BSHL Alpha Skill - Data Interfaces Package
 from .market_data import market_data_manager, MarketDataManager, Quote, OHLCV, TechnicalIndicator, OptionData
 from .fundamental_data import fundamental_data_manager, FundamentalDataManager, CompanyInfo, Financials, Guidance, EarningsCall
 from .news_data import news_data_manager, NewsDataManager, NewsItem, PressRelease, Sentiment
+from .contracts import DataProvenance, DataUnavailableError
+from .market_data import MockMarketSource
+from .fundamental_data import MockFundamentalSource
+from .news_data import MockNewsSource
 
 __all__ = [
+    "DataProvenance",
+    "DataUnavailableError",
+    "MockMarketSource",
+    "MockFundamentalSource",
+    "MockNewsSource",
     # Market Data
     "market_data_manager",
     "MarketDataManager",

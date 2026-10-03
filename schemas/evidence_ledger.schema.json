@@ -6,12 +6,16 @@
   "properties": {
     "ticker": {
       "type": "string",
-      "description": "标的代码"
+      "description": "标的代码",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "date": {
       "type": "string",
       "format": "date",
-      "description": "账本日期"
+      "description": "账本日期",
+      "minLength": 1,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "evidence": {
       "type": "array",
@@ -20,51 +24,89 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "证据唯一标识"
+            "description": "证据唯一标识",
+            "minLength": 1,
+            "pattern": "\\S"
           },
           "claim": {
             "type": "string",
-            "description": "证据声明"
+            "description": "证据声明",
+            "minLength": 1,
+            "pattern": "\\S"
           },
           "source_type": {
             "type": "string",
-            "enum": ["filing", "transcript", "company_release", "industry_report", "media", "social"],
+            "enum": [
+              "filing",
+              "transcript",
+              "company_release",
+              "industry_report",
+              "media",
+              "social"
+            ],
             "description": "来源类型"
           },
           "source_name": {
             "type": "string",
-            "description": "来源名称"
+            "description": "来源名称",
+            "minLength": 1,
+            "pattern": "\\S"
           },
           "source_url": {
             "type": "string",
-            "description": "来源链接"
+            "format": "uri",
+            "pattern": "^https?://[^\\s/]+(?:/[^\\s]*)?$",
+            "minLength": 10
           },
           "source_date": {
             "type": "string",
             "format": "date",
-            "description": "来源日期"
+            "description": "来源日期",
+            "minLength": 1,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
           },
           "evidence_strength": {
             "type": "string",
-            "enum": ["strong", "medium", "weak", "stale"],
+            "enum": [
+              "strong",
+              "medium",
+              "weak",
+              "stale"
+            ],
             "description": "证据强度"
           },
           "supports_or_refutes": {
             "type": "string",
-            "enum": ["supports", "refutes", "mixed"],
+            "enum": [
+              "supports",
+              "refutes",
+              "mixed"
+            ],
             "description": "支持或反驳"
           },
           "affected_thesis": {
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["demand", "supply", "margin", "valuation", "catalyst", "risk"]
+              "enum": [
+                "demand",
+                "supply",
+                "margin",
+                "valuation",
+                "catalyst",
+                "risk"
+              ]
             },
-            "description": "影响的论题"
+            "description": "影响的论题",
+            "minItems": 1
           },
           "freshness": {
             "type": "string",
-            "enum": ["fresh", "aging", "stale"],
+            "enum": [
+              "fresh",
+              "aging",
+              "stale"
+            ],
             "description": "新鲜度"
           },
           "confidence": {
@@ -79,35 +121,107 @@
           },
           "tags": {
             "type": "array",
-            "items": {"type": "string"},
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
             "description": "标签"
           },
           "notes": {
             "type": "string",
-            "description": "备注"
+            "description": "备注",
+            "minLength": 1,
+            "pattern": "\\S"
           }
         },
-        "required": ["id", "claim", "source_type", "evidence_strength", "supports_or_refutes"]
-      }
+        "required": [
+          "id",
+          "claim",
+          "source_type",
+          "source_name",
+          "source_url",
+          "source_date",
+          "evidence_strength",
+          "supports_or_refutes",
+          "freshness",
+          "confidence",
+          "kill_switch"
+        ]
+      },
+      "minItems": 1
     },
     "summary": {
       "type": "object",
       "properties": {
-        "total_count": {"type": "integer"},
-        "strong_count": {"type": "integer"},
-        "medium_count": {"type": "integer"},
-        "weak_count": {"type": "integer"},
-        "stale_count": {"type": "integer"},
-        "supports_count": {"type": "integer"},
-        "refutes_count": {"type": "integer"},
-        "kill_switch_count": {"type": "integer"}
+        "total_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "strong_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "medium_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "weak_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stale_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "supports_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "refutes_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kill_switch_count": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "last_updated": {
       "type": "string",
       "format": "date-time",
-      "description": "最后更新时间"
+      "description": "最后更新时间",
+      "minLength": 1
+    },
+    "schema_version": {
+      "const": "0.6"
+    },
+    "data_mode": {
+      "type": "string",
+      "enum": [
+        "live",
+        "csv",
+        "mock",
+        "unavailable"
+      ]
+    },
+    "is_mock": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
     }
   },
-  "required": ["ticker", "date", "evidence"]
+  "required": [
+    "ticker",
+    "date",
+    "evidence"
+  ]
 }

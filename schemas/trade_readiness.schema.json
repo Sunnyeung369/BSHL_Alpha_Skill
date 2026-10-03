@@ -6,27 +6,48 @@
   "properties": {
     "ticker": {
       "type": "string",
-      "description": "标的代码"
+      "description": "标的代码",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "date": {
       "type": "string",
       "format": "date",
-      "description": "评估日期"
+      "description": "评估日期",
+      "minLength": 1,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "current_price": {
       "type": "number",
-      "description": "当前价格"
+      "description": "当前价格",
+      "exclusiveMinimum": 0
     },
     "pricing_status": {
       "type": "object",
       "properties": {
         "status": {
           "type": "string",
-          "enum": ["FULLY_PRICED", "PARTIALLY_PRICED", "UNDERPRICED"]
+          "enum": [
+            "FULLY_PRICED",
+            "PARTIALLY_PRICED",
+            "UNDERPRICED"
+          ]
         },
-        "description": {"type": "string"},
-        "gain_vs_key_level": {"type": "string"},
-        "valuation_vs_history": {"type": "string"}
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "gain_vs_key_level": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "valuation_vs_history": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
       }
     },
     "crowding": {
@@ -34,11 +55,26 @@
       "properties": {
         "level": {
           "type": "string",
-          "enum": ["EXTREME", "HIGH", "MODERATE", "LOW"]
+          "enum": [
+            "EXTREME",
+            "HIGH",
+            "MODERATE",
+            "LOW"
+          ]
         },
-        "volume_ratio": {"type": "number"},
-        "social_sentiment": {"type": "string"},
-        "options_sentiment": {"type": "string"}
+        "volume_ratio": {
+          "type": "number"
+        },
+        "social_sentiment": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "options_sentiment": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
       }
     },
     "technical_structure": {
@@ -46,20 +82,45 @@
       "properties": {
         "parent_cycle": {
           "type": "string",
-          "enum": ["UP", "CONSOLIDATION", "DOWN"]
+          "enum": [
+            "UP",
+            "CONSOLIDATION",
+            "DOWN"
+          ]
         },
         "child_cycle": {
           "type": "string",
-          "enum": ["BASE_BUILDING", "BREAKOUT_WATCH", "ACCELERATING", "PULLBACK", "EXHAUSTION", "BREAKDOWN"]
+          "enum": [
+            "BASE_BUILDING",
+            "BREAKOUT_WATCH",
+            "ACCELERATING",
+            "PULLBACK",
+            "EXHAUSTION",
+            "BREAKDOWN"
+          ]
         },
-        "support": {"type": "number"},
-        "resistance": {"type": "number"},
-        "atr": {"type": "number"},
-        "atr_percent": {"type": "number"},
-        "distance_from_support_atr": {"type": "number"},
+        "support": {
+          "type": "number"
+        },
+        "resistance": {
+          "type": "number"
+        },
+        "atr": {
+          "type": "number"
+        },
+        "atr_percent": {
+          "type": "number"
+        },
+        "distance_from_support_atr": {
+          "type": "number"
+        },
         "structure_status": {
           "type": "string",
-          "enum": ["OPTIMAL", "REASONABLE", "POOR"]
+          "enum": [
+            "OPTIMAL",
+            "REASONABLE",
+            "POOR"
+          ]
         }
       }
     },
@@ -68,61 +129,116 @@
       "properties": {
         "liquidity": {
           "type": "string",
-          "enum": ["ADEQUATE", "MARGINAL", "INADEQUATE"]
+          "enum": [
+            "ADEQUATE",
+            "MARGINAL",
+            "INADEQUATE"
+          ]
         },
         "volatility": {
           "type": "string",
-          "enum": ["CONTROLLED", "ELEVATED", "EXCESSIVE"]
+          "enum": [
+            "CONTROLLED",
+            "ELEVATED",
+            "EXCESSIVE"
+          ]
         },
         "evidence_quality": {
           "type": "string",
-          "enum": ["STRONG", "MODERATE", "WEAK"]
+          "enum": [
+            "STRONG",
+            "MODERATE",
+            "WEAK"
+          ]
         },
         "social_crowding": {
           "type": "boolean"
         },
         "earnings_risk": {
           "type": "string",
-          "enum": ["HIGH", "MODERATE", "LOW", "NONE"]
+          "enum": [
+            "HIGH",
+            "MODERATE",
+            "LOW",
+            "NONE"
+          ]
         },
         "regulatory_uncertainty": {
           "type": "boolean"
         },
         "distance_from_mean": {
           "type": "string",
-          "enum": ["NORMAL", "STRETCHED", "EXTREME"]
+          "enum": [
+            "NORMAL",
+            "STRETCHED",
+            "EXTREME"
+          ]
         },
         "stop_loss_distance": {
           "type": "string",
-          "enum": ["REASONABLE", "WIDE", "EXCESSIVE"]
+          "enum": [
+            "REASONABLE",
+            "WIDE",
+            "EXCESSIVE"
+          ]
         },
         "position_exposure": {
           "type": "string",
-          "enum": ["ACCEPTABLE", "ELEVATED", "EXCESSIVE"]
+          "enum": [
+            "ACCEPTABLE",
+            "ELEVATED",
+            "EXCESSIVE"
+          ]
         },
         "correlation": {
           "type": "string",
-          "enum": ["LOW", "MODERATE", "HIGH"]
+          "enum": [
+            "LOW",
+            "MODERATE",
+            "HIGH"
+          ]
         }
       }
     },
     "stop_loss": {
       "type": "object",
       "properties": {
-        "level": {"type": "number"},
-        "clear": {"type": "boolean"},
-        "distance_percent": {"type": "number"},
-        "distance_atr": {"type": "number"}
+        "level": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "clear": {
+          "type": "boolean"
+        },
+        "distance_percent": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "distance_atr": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
       }
     },
     "reward_risk_ratio": {
       "type": "object",
       "properties": {
-        "ratio": {"type": "number"},
-        "target": {"type": "number"},
+        "ratio": {
+          "type": "number",
+          "minimum": 0
+        },
+        "target": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
         "rating": {
           "type": "string",
-          "enum": ["EXCELLENT", "GOOD", "FAIR", "POOR"]
+          "enum": [
+            "EXCELLENT",
+            "GOOD",
+            "FAIR",
+            "POOR"
+          ]
         }
       }
     },
@@ -136,42 +252,326 @@
         },
         "grade": {
           "type": "string",
-          "enum": ["A", "B", "C", "D"]
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
         },
         "breakdown": {
           "type": "object",
           "properties": {
-            "parent_cycle_direction": {"type": "number"},
-            "child_cycle_structure": {"type": "number"},
-            "breakout_confirmation": {"type": "number"},
-            "pullback_quality": {"type": "number"},
-            "volume_confirmation": {"type": "number"},
-            "stop_loss_clarity": {"type": "number"},
-            "reward_risk": {"type": "number"},
-            "volatility_controlled": {"type": "number"}
+            "parent_cycle_direction": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "child_cycle_structure": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "breakout_confirmation": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "pullback_quality": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "volume_confirmation": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "stop_loss_clarity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "reward_risk": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "volatility_controlled": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            }
           }
         }
       }
     },
     "overall_status": {
       "type": "string",
-      "enum": ["Trade Ready", "Watch Closely", "Wait", "No Trade"],
-      "description": "交易准备状态"
+      "enum": [
+        "Trade Ready",
+        "Watch Closely",
+        "Wait",
+        "No Trade"
+      ],
+      "description": "Internal readiness score status; distinct from final_status."
     },
     "action": {
       "type": "string",
-      "description": "建议动作"
+      "description": "建议动作",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "watch_conditions": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
       "description": "观察条件"
     },
     "abandon_conditions": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
       "description": "放弃条件"
+    },
+    "schema_version": {
+      "const": "0.6"
+    },
+    "data_mode": {
+      "type": "string",
+      "enum": [
+        "live",
+        "csv",
+        "mock",
+        "unavailable"
+      ]
+    },
+    "is_mock": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "final_status": {
+      "type": "string",
+      "enum": [
+        "Research Only",
+        "Watchlist",
+        "Trade Ready",
+        "Wait Pullback",
+        "Avoid",
+        "Veto"
+      ]
+    },
+    "closed_bar_confirmed": {
+      "type": "boolean"
+    },
+    "stop_loss_defined": {
+      "type": "boolean"
+    },
+    "data_validated": {
+      "type": "boolean"
+    },
+    "risk_decision": {
+      "type": "string",
+      "enum": [
+        "Pass",
+        "Reduce Size",
+        "Watch Only",
+        "Wait Confirmation",
+        "Wait",
+        "Veto"
+      ]
     }
   },
-  "required": ["ticker", "date", "overall_status"]
+  "required": [
+    "ticker",
+    "date",
+    "overall_status"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "overall_status": {
+            "const": "Trade Ready"
+          }
+        },
+        "required": [
+          "overall_status"
+        ]
+      },
+      "then": {
+        "required": [
+          "current_price",
+          "closed_bar_confirmed",
+          "stop_loss_defined",
+          "stop_loss",
+          "reward_risk_ratio",
+          "trade_readiness_score",
+          "risk_decision",
+          "data_mode",
+          "is_mock",
+          "data_validated"
+        ],
+        "properties": {
+          "closed_bar_confirmed": {
+            "const": true
+          },
+          "stop_loss_defined": {
+            "const": true
+          },
+          "is_mock": {
+            "const": false
+          },
+          "data_validated": {
+            "const": true
+          },
+          "data_mode": {
+            "enum": [
+              "live",
+              "csv"
+            ]
+          },
+          "risk_decision": {
+            "const": "Pass"
+          },
+          "stop_loss": {
+            "required": [
+              "clear",
+              "level"
+            ],
+            "properties": {
+              "clear": {
+                "const": true
+              },
+              "level": {
+                "exclusiveMinimum": 0
+              }
+            }
+          },
+          "trade_readiness_score": {
+            "required": [
+              "total"
+            ],
+            "properties": {
+              "total": {
+                "minimum": 85
+              }
+            }
+          },
+          "reward_risk_ratio": {
+            "required": [
+              "ratio",
+              "target"
+            ],
+            "properties": {
+              "ratio": {
+                "minimum": 2
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "final_status": {
+            "const": "Trade Ready"
+          }
+        },
+        "required": [
+          "final_status"
+        ]
+      },
+      "then": {
+        "required": [
+          "current_price",
+          "closed_bar_confirmed",
+          "stop_loss_defined",
+          "stop_loss",
+          "reward_risk_ratio",
+          "trade_readiness_score",
+          "risk_decision",
+          "data_mode",
+          "is_mock",
+          "data_validated"
+        ],
+        "properties": {
+          "closed_bar_confirmed": {
+            "const": true
+          },
+          "stop_loss_defined": {
+            "const": true
+          },
+          "is_mock": {
+            "const": false
+          },
+          "data_validated": {
+            "const": true
+          },
+          "data_mode": {
+            "enum": [
+              "live",
+              "csv"
+            ]
+          },
+          "risk_decision": {
+            "const": "Pass"
+          },
+          "stop_loss": {
+            "required": [
+              "clear",
+              "level"
+            ],
+            "properties": {
+              "clear": {
+                "const": true
+              },
+              "level": {
+                "exclusiveMinimum": 0
+              }
+            }
+          },
+          "trade_readiness_score": {
+            "required": [
+              "total"
+            ],
+            "properties": {
+              "total": {
+                "minimum": 85
+              }
+            }
+          },
+          "reward_risk_ratio": {
+            "required": [
+              "ratio",
+              "target"
+            ],
+            "properties": {
+              "ratio": {
+                "minimum": 2
+              }
+            }
+          },
+          "overall_status": {
+            "const": "Trade Ready"
+          }
+        }
+      }
+    }
+  ]
 }

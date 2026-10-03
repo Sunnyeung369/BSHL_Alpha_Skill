@@ -1,60 +1,53 @@
-"""
-BSHL Alpha Skill - Personal Evolution System
+"""Local decision history with reviewed candidates, never automatic risk weakening.
 
-用户专属进化系统，根据个人真实使用历史实现规则自适应。
+state.json is atomically replaced and authoritative. Legacy decisions.jsonl and
+rules.json are migration inputs. This store supports one writer process only.
 """
-
-from typing import Dict, List, Optional
-from dataclasses import dataclass, field
-from datetime import datetime, date
+from copy import deepcopy
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
 from enum import Enum
 import json
+import math
+import os
 from pathlib import Path
+import re
+import tempfile
+from typing import Dict, List, Optional
 
 
 class DecisionType(Enum):
-    """决策类型"""
-    TRADE = "trade"           # 交易
-    SKIP = "skip"             # 跳过
-    WATCH = "watch"           # 观察
-    VETO = "veto"             # 风控否决
+    TRADE = "trade"
+    SKIP = "skip"
+    WATCH = "watch"
+    VETO = "veto"
 
 
 class DecisionOutcome(Enum):
-    """决策结果"""
-    PROFIT = "profit"         # 盈利
-    LOSS = "loss"             # 亏损
-    BREAK_EVEN = "break_even" # 盈亏平衡
-    MISSED = "missed"         # 错过机会
-    AVOIDED = "avoided"       # 成功避险
+    PROFIT = "profit"
+    LOSS = "loss"
+    BREAK_EVEN = "break_even"
+    MISSED = "missed"
+    AVOIDED = "avoided"
 
 
 @dataclass
 class PersonalDecision:
-    """个人决策记录"""
     id: str
     timestamp: datetime
     symbol: str
     asset_class: str
-
-    # 原始判断
     alpha_thesis_score: float
     market_pricing_score: float
     trade_readiness_score: float
     risk_governor_decision: str
-    final_status: str  # Research Only, Watchlist, Trade Ready, etc.
-
-    # 用户决策
+    final_status: str
     user_decision: DecisionType
-    user_action: str  # 具体动作描述
-
-    # 实际结果
+    user_action: str
     outcome: DecisionOutcome
     entry_price: Optional[float] = None
     exit_price: Optional[float] = None
     price_change_percent: Optional[float] = None
-
-    # 反思
     user_notes: str = ""
     lessons_learned: List[str] = field(default_factory=list)
     rules_to_adjust: List[str] = field(default_factory=list)
@@ -62,384 +55,229 @@ class PersonalDecision:
 
 @dataclass
 class PersonalRule:
-    """个人规则"""
     id: str
     description: str
-    category: str  # evidence, structure, risk, timing, etc.
+    category: str
     enabled: bool = True
-    weight: float = 1.0  # 规则权重，影响评分
+    weight: float = 1.0
     success_count: int = 0
     failure_count: int = 0
     last_applied: Optional[datetime] = None
     evolution_history: List[Dict] = field(default_factory=list)
 
     def get_success_rate(self) -> float:
-        """获取成功率"""
         total = self.success_count + self.failure_count
-        return self.success_count / total if total > 0 else 0.5
+        return self.success_count / total if total else 0.5
 
     def should_disable(self) -> bool:
-        """判断是否应该禁用（成功率过低）"""
-        total = self.success_count + self.failure_count
-        return total >= 5 and self.get_success_rate() < 0.4
+        """Compatibility method: observations never disable rules."""
+        return False
+
+
+def _validate_user_id(user_id: str) -> None:
+    reserved = {"CON", "PRN", "AUX", "NUL"} | {
+        f"{prefix}{i}" for prefix in ("COM", "LPT") for i in range(1, 10)}
+    if (not isinstance(user_id, str) or
+            not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", user_id) or
+            user_id.upper() in reserved):
+        raise ValueError("user_id must be a safe 1-64 character identifier")
 
 
 class PersonalEvolutionEngine:
-    """个人进化引擎"""
+    PROTECTED_RULES = {"RISK_VETO_OVERRIDE", "EVIDENCE_MIN_SCORE", "STRUCTURE_CONFIRMED"}
 
     def __init__(self, user_id: str, data_dir: Optional[Path] = None):
+        _validate_user_id(user_id)
         self.user_id = user_id
-        self.data_dir = data_dir or Path.home() / ".bshl" / user_id
+        base = (Path.home() / ".bshl").resolve()
+        self.data_dir = Path(data_dir).resolve() if data_dir is not None else (base / user_id).resolve()
+        if data_dir is None and self.data_dir.parent != base:
+            raise ValueError("user storage escapes .bshl")
         self.data_dir.mkdir(parents=True, exist_ok=True)
-
         self.decisions: List[PersonalDecision] = []
         self.rules: Dict[str, PersonalRule] = {}
-
+        self.candidates: List[Dict] = []
         self._load_data()
         self._init_default_rules()
 
+    @staticmethod
+    def _parse_decision(data: Dict) -> PersonalDecision:
+        values = dict(data)
+        values["timestamp"] = datetime.fromisoformat(values["timestamp"])
+        values["user_decision"] = DecisionType(values["user_decision"])
+        values["outcome"] = DecisionOutcome(values["outcome"])
+        return PersonalDecision(**values)
+
     def _load_data(self):
-        """加载用户数据"""
-        decisions_file = self.data_dir / "decisions.jsonl"
-        if decisions_file.exists():
-            with open(decisions_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    data = json.loads(line)
-                    self.decisions.append(self._parse_decision(data))
+        state_file = self.data_dir / "state.json"
+        if state_file.exists():
+            state = json.loads(state_file.read_text(encoding="utf-8"))
+            if state.get("schema_version") != 1:
+                raise ValueError("unsupported personal state schema")
+            decisions_data, rules_data = state["decisions"], state["rules"]
+            self.candidates = state.get("candidates", [])
+        else:
+            decisions_file = self.data_dir / "decisions.jsonl"
+            decisions_data = [json.loads(line) for line in
+                decisions_file.read_text(encoding="utf-8").splitlines() if line.strip()] if decisions_file.exists() else []
+            rules_file = self.data_dir / "rules.json"
+            rules_data = json.loads(rules_file.read_text(encoding="utf-8")) if rules_file.exists() else {}
+        seen = set()
+        for values in decisions_data:
+            decision = self._parse_decision(values)
+            if decision.id in seen:
+                raise ValueError(f"duplicate stored decision id: {decision.id}")
+            seen.add(decision.id)
+            self.decisions.append(decision)
+        for rule_id, values in rules_data.items():
+            values = dict(values)
+            if values.get("last_applied"):
+                values["last_applied"] = datetime.fromisoformat(values["last_applied"])
+            if values.get("id") != rule_id:
+                raise ValueError("rule key and id differ")
+            self.rules[rule_id] = PersonalRule(**values)
 
-        rules_file = self.data_dir / "rules.json"
-        if rules_file.exists():
-            with open(rules_file, "r", encoding="utf-8") as f:
-                rules_data = json.load(f)
-                for rule_id, rule_data in rules_data.items():
-                    self.rules[rule_id] = PersonalRule(**rule_data)
-
-    def _parse_decision(self, data: Dict) -> PersonalDecision:
-        """解析决策数据"""
-        return PersonalDecision(
-            id=data["id"],
-            timestamp=datetime.fromisoformat(data["timestamp"]),
-            symbol=data["symbol"],
-            asset_class=data["asset_class"],
-            alpha_thesis_score=data["alpha_thesis_score"],
-            market_pricing_score=data["market_pricing_score"],
-            trade_readiness_score=data["trade_readiness_score"],
-            risk_governor_decision=data["risk_governor_decision"],
-            final_status=data["final_status"],
-            user_decision=DecisionType(data["user_decision"]),
-            user_action=data["user_action"],
-            outcome=DecisionOutcome(data["outcome"]),
-            entry_price=data.get("entry_price"),
-            exit_price=data.get("exit_price"),
-            price_change_percent=data.get("price_change_percent"),
-            user_notes=data.get("user_notes", ""),
-            lessons_learned=data.get("lessons_learned", []),
-            rules_to_adjust=data.get("rules_to_adjust", []),
-        )
+    def _is_protected(self, rule: PersonalRule) -> bool:
+        return rule.id in self.PROTECTED_RULES or rule.category == "risk"
 
     def _init_default_rules(self):
-        """初始化默认规则"""
-        default_rules = {
-            "EVIDENCE_MIN_SCORE": PersonalRule(
-                id="EVIDENCE_MIN_SCORE",
-                description="Alpha Thesis 低于 70 分不交易",
-                category="evidence",
-                weight=1.0,
-            ),
-            "PRICING_CROWDED_SKIP": PersonalRule(
-                id="PRICING_CROWDED_SKIP",
-                description="Market Pricing 高于 85 分（过度拥挤）不追高",
-                category="pricing",
-                weight=1.0,
-            ),
-            "STRUCTURE_CONFIRMED": PersonalRule(
-                id="STRUCTURE_CONFIRMED",
-                description="K线结构未确认不进入交易准备",
-                category="structure",
-                weight=1.0,
-            ),
-            "RISK_VETO_OVERRIDE": PersonalRule(
-                id="RISK_VETO_OVERRIDE",
-                description="Risk Governor 否决直接放弃，不考虑其他评分",
-                category="risk",
-                weight=2.0,  # 更高权重
-            ),
-            "TIMING_PULLBACK": PersonalRule(
-                id="TIMING_PULLBACK",
-                description="已涨超过 20% 且无回踩，等待回踩确认",
-                category="timing",
-                weight=0.8,
-            ),
-        }
+        defaults = [
+            PersonalRule("EVIDENCE_MIN_SCORE", "Alpha Thesis below 70: research only", "evidence"),
+            PersonalRule("PRICING_CROWDED_SKIP", "Avoid chasing crowded prices", "pricing"),
+            PersonalRule("STRUCTURE_CONFIRMED", "Require closed-bar confirmation", "structure"),
+            PersonalRule("RISK_VETO_OVERRIDE", "Risk veto cannot be bypassed", "risk", weight=2.0),
+            PersonalRule("TIMING_PULLBACK", "Wait for a confirmed pullback", "timing", weight=0.8),
+        ]
+        for rule in defaults:
+            self.rules.setdefault(rule.id, rule)
+        for rule in self.rules.values():
+            if self._is_protected(rule):
+                rule.enabled = True
 
-        for rule_id, rule in default_rules.items():
-            if rule_id not in self.rules:
-                self.rules[rule_id] = rule
+    @staticmethod
+    def _serialize_decision(decision: PersonalDecision) -> Dict:
+        result = asdict(decision)
+        result["timestamp"] = decision.timestamp.isoformat()
+        result["user_decision"] = decision.user_decision.value
+        result["outcome"] = decision.outcome.value
+        return result
 
-    def record_decision(self, decision: PersonalDecision):
-        """记录用户决策"""
-        self.decisions.append(decision)
-        self._update_rules(decision)
-        self._save_decision(decision)
-
-    def _update_rules(self, decision: PersonalDecision):
-        """根据决策结果更新规则"""
-        for rule_id in decision.rules_to_adjust:
-            if rule_id in self.rules:
-                rule = self.rules[rule_id]
-                if decision.outcome == DecisionOutcome.PROFIT:
-                    rule.success_count += 1
-                elif decision.outcome == DecisionOutcome.LOSS:
-                    rule.failure_count += 1
-
-                rule.last_applied = decision.timestamp
-
-                # 记录进化历史
-                rule.evolution_history.append({
-                    "timestamp": decision.timestamp.isoformat(),
-                    "decision_id": decision.id,
-                    "outcome": decision.outcome.value,
-                    "notes": decision.user_notes,
-                })
-
-                # 检查是否需要禁用规则
-                if rule.should_disable():
-                    rule.enabled = False
-                    rule.evolution_history.append({
-                        "timestamp": decision.timestamp.isoformat(),
-                        "event": "rule_disabled",
-                        "reason": f"成功率过低 ({rule.get_success_rate():.1%})",
-                    })
-
-        self._save_rules()
-
-    def _save_decision(self, decision: PersonalDecision):
-        """保存决策记录"""
-        decisions_file = self.data_dir / "decisions.jsonl"
-        with open(decisions_file, "a", encoding="utf-8") as f:
-            data = {
-                "id": decision.id,
-                "timestamp": decision.timestamp.isoformat(),
-                "symbol": decision.symbol,
-                "asset_class": decision.asset_class,
-                "alpha_thesis_score": decision.alpha_thesis_score,
-                "market_pricing_score": decision.market_pricing_score,
-                "trade_readiness_score": decision.trade_readiness_score,
-                "risk_governor_decision": decision.risk_governor_decision,
-                "final_status": decision.final_status,
-                "user_decision": decision.user_decision.value,
-                "user_action": decision.user_action,
-                "outcome": decision.outcome.value,
-                "entry_price": decision.entry_price,
-                "exit_price": decision.exit_price,
-                "price_change_percent": decision.price_change_percent,
-                "user_notes": decision.user_notes,
-                "lessons_learned": decision.lessons_learned,
-                "rules_to_adjust": decision.rules_to_adjust,
-            }
-            f.write(json.dumps(data, ensure_ascii=False) + "\n")
+    def _save_state(self):
+        rules = {}
+        for rule_id, rule in self.rules.items():
+            values = asdict(rule)
+            values["last_applied"] = rule.last_applied.isoformat() if rule.last_applied else None
+            if self._is_protected(rule):
+                values["enabled"] = True
+            rules[rule_id] = values
+        state = {"schema_version": 1, "decisions": [self._serialize_decision(d) for d in self.decisions],
+                 "rules": rules, "candidates": self.candidates}
+        fd, temporary = tempfile.mkstemp(prefix=".state-", suffix=".tmp", dir=self.data_dir)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                json.dump(state, handle, ensure_ascii=False, indent=2, allow_nan=False)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, self.data_dir / "state.json")
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
 
     def _save_rules(self):
-        """保存规则"""
-        rules_file = self.data_dir / "rules.json"
-        rules_data = {}
-        for rule_id, rule in self.rules.items():
-            rules_data[rule_id] = {
-                "id": rule.id,
-                "description": rule.description,
-                "category": rule.category,
-                "enabled": rule.enabled,
-                "weight": rule.weight,
-                "success_count": rule.success_count,
-                "failure_count": rule.failure_count,
-                "last_applied": rule.last_applied.isoformat() if rule.last_applied else None,
-                "evolution_history": rule.evolution_history,
-            }
+        self._save_state()
 
-        with open(rules_file, "w", encoding="utf-8") as f:
-            json.dump(rules_data, f, ensure_ascii=False, indent=2)
+    def record_decision(self, decision: PersonalDecision):
+        if not decision.id or any(d.id == decision.id for d in self.decisions):
+            raise ValueError("decision id must be nonempty and unique")
+        old = deepcopy((self.decisions, self.rules, self.candidates))
+        try:
+            self.decisions.append(deepcopy(decision))
+            for rule_id in set(decision.rules_to_adjust):
+                if rule_id not in self.rules:
+                    continue
+                rule = self.rules[rule_id]
+                rule.success_count += int(decision.outcome == DecisionOutcome.PROFIT)
+                rule.failure_count += int(decision.outcome == DecisionOutcome.LOSS)
+                rule.last_applied = decision.timestamp
+                rule.evolution_history.append({"timestamp": decision.timestamp.isoformat(),
+                    "decision_id": decision.id, "outcome": decision.outcome.value, "event": "observation"})
+                total = rule.success_count + rule.failure_count
+                if not self._is_protected(rule) and total >= 5 and not any(
+                        c["rule_id"] == rule_id and c["status"] == "pending" for c in self.candidates):
+                    self.candidates.append({"id": f"{rule_id}:{total}", "rule_id": rule_id,
+                        "status": "pending", "observations": total,
+                        "label_success_rate": rule.get_success_rate(),
+                        "reason": "Review costs and out-of-sample evidence before accepting a change"})
+            self._save_state()
+        except Exception:
+            self.decisions, self.rules, self.candidates = old
+            raise
+
+    def accept_candidate(self, candidate_id: str, *, reviewer: str, rationale: str,
+                         validation_reference: str, weight: Optional[float] = None,
+                         enabled: Optional[bool] = None) -> Dict:
+        """Explicit review; the reference records evidence and is not proof."""
+        if not all(isinstance(v, str) and v.strip() for v in (reviewer, rationale, validation_reference)):
+            raise ValueError("reviewer, rationale and validation reference are required")
+        candidate = next((c for c in self.candidates if c["id"] == candidate_id), None)
+        if candidate is None or candidate["status"] != "pending":
+            raise ValueError("unknown or already reviewed candidate")
+        rule = self.rules[candidate["rule_id"]]
+        if self._is_protected(rule):
+            raise ValueError("protected gates cannot be changed by personal adaptation")
+        if weight is not None and (isinstance(weight, bool) or not math.isfinite(weight) or weight <= 0):
+            raise ValueError("weight must be finite and positive")
+        if enabled is not None and not isinstance(enabled, bool):
+            raise ValueError("enabled must be boolean")
+        old = deepcopy((self.rules, self.candidates))
+        try:
+            before = {"weight": rule.weight, "enabled": rule.enabled}
+            if weight is not None:
+                rule.weight = weight
+            if enabled is not None:
+                rule.enabled = enabled
+            candidate.update(status="accepted", reviewer=reviewer, rationale=rationale,
+                validation_reference=validation_reference, reviewed_at=datetime.now(timezone.utc).isoformat(),
+                before=before, after={"weight": rule.weight, "enabled": rule.enabled})
+            rule.evolution_history.append(deepcopy(candidate))
+            self._save_state()
+        except Exception:
+            self.rules, self.candidates = old
+            raise
+        return deepcopy(candidate)
 
     def get_personal_insights(self) -> Dict:
-        """获取个人专属洞察"""
-        if not self.decisions:
-            return {"message": "暂无决策记录"}
-
-        # 统计
-        total = len(self.decisions)
-        profit = sum(1 for d in self.decisions if d.outcome == DecisionOutcome.PROFIT)
-        loss = sum(1 for d in self.decisions if d.outcome == DecisionOutcome.LOSS)
-        missed = sum(1 for d in self.decisions if d.outcome == DecisionOutcome.MISSED)
-        avoided = sum(1 for d in self.decisions if d.outcome == DecisionOutcome.AVOIDED)
-
-        # 成功率
-        executed = profit + loss
-        success_rate = profit / executed if executed > 0 else 0
-
-        # 按标的统计
-        symbol_stats = {}
-        for d in self.decisions:
-            if d.symbol not in symbol_stats:
-                symbol_stats[d.symbol] = {"profit": 0, "loss": 0, "total": 0}
-            symbol_stats[d.symbol]["total"] += 1
-            if d.outcome == DecisionOutcome.PROFIT:
-                symbol_stats[d.symbol]["profit"] += 1
-            elif d.outcome == DecisionOutcome.LOSS:
-                symbol_stats[d.symbol]["loss"] += 1
-
-        # 最盈利/最亏损标的
-        best_symbol = max(symbol_stats.items(),
-                         key=lambda x: x[1]["profit"] - x[1]["loss"],
-                         key=lambda x: (x[1]["profit"] / (x[1]["profit"] + x[1]["loss"]) if (x[1]["profit"] + x[1]["loss"]) > 0 else 0))
-
-        # 规则状态
-        active_rules = [r for r in self.rules.values() if r.enabled]
-        disabled_rules = [r for r in self.rules.values() if not r.enabled]
-
-        # 累计经验
-        all_lessons = []
-        for d in self.decisions:
-            all_lessons.extend(d.lessons_learned)
-
-        lesson_count = {}
-        for lesson in all_lessons:
-            lesson_count[lesson] = lesson_count.get(lesson, 0) + 1
-
-        top_lessons = sorted(lesson_count.items(), key=lambda x: x[1], reverse=True)[:5]
-
-        return {
-            "summary": {
-                "total_decisions": total,
-                "profit": profit,
-                "loss": loss,
-                "missed": missed,
-                "avoided": avoided,
-                "success_rate": success_rate,
-            },
-            "best_symbols": [
-                {"symbol": s, "success_rate": p["profit"]/(p["profit"]+p["loss"]) if (p["profit"]+p["loss"])>0 else 0}
-                for s, p in sorted(symbol_stats.items(),
-                                   key=lambda x: x[1]["profit"]/(x[1]["profit"]+x[1]["loss"]) if (x[1]["profit"]+x[1]["loss"])>0 else 0,
-                                   reverse=True)[:3]
-            ],
-            "rules": {
-                "active": len(active_rules),
-                "disabled": len(disabled_rules),
-                "details": [
-                    {
-                        "id": r.id,
-                        "description": r.description,
-                        "success_rate": r.get_success_rate(),
-                        "enabled": r.enabled,
-                    }
-                    for r in self.rules.values()
-                ]
-            },
-            "top_lessons": [lesson for lesson, _ in top_lessons],
-        }
+        counts = {outcome.value: sum(d.outcome == outcome for d in self.decisions) for outcome in DecisionOutcome}
+        resolved = counts["profit"] + counts["loss"]
+        lessons = {}
+        for decision in self.decisions:
+            for lesson in decision.lessons_learned:
+                lessons[lesson] = lessons.get(lesson, 0) + 1
+        return {"summary": {"total_decisions": len(self.decisions), **counts,
+            "success_rate": counts["profit"] / resolved if resolved else None,
+            "status": "insufficient" if resolved < 30 else "descriptive_only"},
+            "best_symbols": [],
+            "rules": {"active": sum(r.enabled for r in self.rules.values()),
+                "disabled": sum(not r.enabled for r in self.rules.values()),
+                "details": [{"id": r.id, "description": r.description, "success_rate": r.get_success_rate(),
+                    "enabled": r.enabled, "protected": self._is_protected(r)} for r in self.rules.values()]},
+            "top_lessons": sorted(lessons, key=lambda item: (-lessons[item], item))[:5]}
 
     def get_adjusted_weights(self) -> Dict[str, float]:
-        """获取调整后的规则权重（用于个性化评分）"""
-        weights = {}
-        for rule_id, rule in self.rules.items():
-            if rule.enabled:
-                # 基于成功率动态调整权重
-                success_rate = rule.get_success_rate()
-                if success_rate > 0.7:
-                    weights[rule_id] = rule.weight * 1.2  # 提高权重
-                elif success_rate < 0.5:
-                    weights[rule_id] = rule.weight * 0.8  # 降低权重
-                else:
-                    weights[rule_id] = rule.weight
-        return weights
+        """Only explicitly reviewed weights; no win-rate multiplier."""
+        return {key: rule.weight for key, rule in self.rules.items() if rule.enabled}
 
     def evolve(self) -> Dict:
-        """执行进化迭代，返回进化建议"""
-        insights = self.get_personal_insights()
-
-        suggestions = []
-
-        # 基于成功率建议
-        if insights["summary"]["success_rate"] < 0.5:
-            suggestions.append({
-                "type": "warning",
-                "message": "当前成功率低于 50%，建议更严格地遵循风控规则"
-            })
-
-        # 基于规则状态建议
-        for rule in insights["rules"]["details"]:
-            if not rule["enabled"]:
-                suggestions.append({
-                    "type": "info",
-                    "message": f"规则 '{rule['description']}' 已因成功率过低被禁用"
-                })
-
-        # 基于经验建议
-        if insights["top_lessons"]:
-            suggestions.append({
-                "type": "lesson",
-                "message": f"最重要的经验: {insights['top_lessons'][0]}"
-            })
-
-        return {
-            "insights": insights,
-            "suggestions": suggestions,
-            "adjusted_weights": self.get_adjusted_weights(),
-        }
+        return {"insights": self.get_personal_insights(),
+            "suggestions": [{"type": "info", "message": "候选规则需人工审阅与样本外验证；硬风控不自动更改"}],
+            "candidates": deepcopy(self.candidates), "adjusted_weights": self.get_adjusted_weights()}
 
 
-# 全局实例（使用时需要指定 user_id）
 _engines: Dict[str, PersonalEvolutionEngine] = {}
 
 
 def get_engine(user_id: str = "default") -> PersonalEvolutionEngine:
-    """获取用户的进化引擎"""
+    _validate_user_id(user_id)
     if user_id not in _engines:
         _engines[user_id] = PersonalEvolutionEngine(user_id)
     return _engines[user_id]
-
-
-def main():
-    """示例用法"""
-    engine = get_engine("demo_user")
-
-    # 示例：记录一次决策
-    from datetime import datetime
-
-    decision = PersonalDecision(
-        id="DEC-001",
-        timestamp=datetime.now(),
-        symbol="NVDA",
-        asset_class="US_STOCK",
-        alpha_thesis_score=75,
-        market_pricing_score=70,
-        trade_readiness_score=80,
-        risk_governor_decision="Pass",
-        final_status="Trade Ready",
-        user_decision=DecisionType.TRADE,
-        user_action="买入 10% 仓位",
-        outcome=DecisionOutcome.PROFIT,
-        entry_price=800.0,
-        exit_price=850.0,
-        price_change_percent=6.25,
-        user_notes="AI 需求逻辑验证正确",
-        lessons_learned=["科技股在 Risk On 环境下表现更好"],
-        rules_to_adjust=["EVIDENCE_MIN_SCORE", "STRUCTURE_CONFIRMED"],
-    )
-
-    engine.record_decision(decision)
-
-    # 获取进化洞察
-    evolution = engine.evolve()
-
-    print("=== BSHL Alpha Skill 个人进化报告 ===\n")
-    print(f"总决策数: {evolution['insights']['summary']['total_decisions']}")
-    print(f"成功率: {evolution['insights']['summary']['success_rate']:.1%}")
-    print(f"活跃规则: {evolution['insights']['rules']['active']}")
-
-    print("\n进化建议:")
-    for suggestion in evolution["suggestions"]:
-        print(f"  [{suggestion['type'].upper()}] {suggestion['message']}")
-
-
-if __name__ == "__main__":
-    main()
