@@ -20,6 +20,13 @@ def build_parser():
     demo = sub.add_parser("demo", help="No-key synthetic example; not market performance")
     demo.add_argument("--scenario", choices=("breakout", "no-stop", "overheated"), default="breakout")
     demo.add_argument("--output", default="outputs/demo")
+    backtest = sub.add_parser("backtest", help="Historical US cash simulation; not validated performance")
+    backtest.add_argument("--csv", required=True)
+    backtest.add_argument("--metadata", required=True)
+    backtest.add_argument("--train-end", required=True, help="ISO date, fixed before evaluating the holdout")
+    backtest.add_argument("--test-start", required=True, help="ISO date strictly after train-end")
+    backtest.add_argument("--config", help="JSON overrides for BacktestConfig; split dates are supplied on CLI")
+    backtest.add_argument("--output", default="outputs/backtest.json")
     return parser
 
 
@@ -28,6 +35,19 @@ def main(argv=None):
     try:
         from .market import load_dataset
         from .engine import build_card
+        if args.command == "backtest":
+            from datetime import date
+            from .backtest import BacktestConfig, run_backtest
+            from .files import write_json
+            dataset = load_dataset(args.csv, args.metadata)
+            config = json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {}
+            setup = BacktestConfig(train_end=date.fromisoformat(args.train_end),
+                                   test_start=date.fromisoformat(args.test_start), **config)
+            result = run_backtest(dataset, setup)
+            path = write_json(result, args.output)
+            print(dumps({"report": str(path), "is_mock": result["is_mock"],
+                         "performance_validated": False, "trade_count": result["trade_count"]}))
+            return 0
         if args.command == "demo":
             assets = Path(__file__).with_name("assets")
             scenario = "overheated" if args.scenario == "overheated" else "breakout"

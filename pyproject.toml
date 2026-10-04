@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bshl-alpha"
-version = "0.6.0"
+version = "0.7.0"
 description = "Evidence-first market research and explainable trade readiness"
 requires-python = ">=3.10"
 license = {text = "MIT"}
