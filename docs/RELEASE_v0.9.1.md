@@ -12,6 +12,8 @@ This prerelease closes demonstrated gaps found in a deeper audit of v0.9.0. It d
 
 Acceptance: 150 local tests, exact public card/schema/Markdown/SVG checks, skill validation, repository compilation/links and a clean wheel installation. Windows/Linux/macOS × Python 3.10/3.13 CI identifies the final checked commit. Rules: readiness-0.6.4; old release/tag/assets remain preserved.
 
-Sources and context remain user-supplied; validation checks internal consistency, not authentic market truth. No broker, autonomous order execution, background monitor or proven edge. Social Preview PNG is delivered, but its Settings upload is still unfinished after another browser timeout.
+Sources and context remain user-supplied; validation checks internal consistency, not authentic market truth. No broker, autonomous order execution, background monitor or proven edge. Social Preview Settings upload was unfinished when this release was published.
+
+Repository setup update — 2026-10-05 (Asia/Singapore): the cover is now uploaded through Settings and verified against public `og:image` and `twitter:image`. [Cover acceptance](https://github.com/Sunnyeung369/BSHL_Alpha_Skill/blob/main/docs/COVER_2026-10-05.md). This settings/documentation update does not replace the v0.9.1 tag or wheel.
 
 [Detailed audit](AUDIT_2026-10-04.md) · [Prior release](RELEASE_v0.9.0.md)
