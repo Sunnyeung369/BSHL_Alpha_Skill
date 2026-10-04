@@ -1,3 +1,5 @@
+> 当前接口以[数据合同](../docs/DATA_CONTRACT.md)和[核心原则](core_principles.md)为准；本词汇表保留研究概念，不代表相关功能均已实现。
+
 # Terminology
 ## BSHL Alpha Skill 术语表
 
@@ -28,7 +30,7 @@ Average True Range，平均真实波动范围，用于衡量价格波动性。
 突破，价格突破关键阻力位。
 
 ### BSHL
-Buy-Sell-High-Low，买卖高低结构交易系统。
+历史名称Buy-Sell-High-Low；当前是证据驱动投研与交易准备工具，不是实盘交易系统。
 
 ---
 
