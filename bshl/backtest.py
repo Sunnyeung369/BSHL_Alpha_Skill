@@ -4,12 +4,12 @@ This is a research simulator, not a broker. The caller supplies session times;
 the engine does not invent an exchange calendar. No leverage, borrowing,
 dividends, financing, taxes or intraday order-book model are implemented.
 """
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import date, datetime, time, timezone
 import math
 from typing import Callable, Optional
 
-from .market import Bar, Dataset, parse_timestamp, validate_dataset
+from .market import Bar, Dataset, parse_timestamp, session_gaps, validate_dataset
 from .serialization import to_jsonable
 from .structure import moving_average, wilder_atr
 
@@ -292,6 +292,11 @@ sandboxed: callers must not capture future datasets or tune on the holdout.
     end = _bound(config.end_date, True) if config.end_date is not None else max(bar.available_at for bar in dataset.bars)
     if end < start:
         raise ValueError("empty time window")
+    if not dataset.session_dates:
+        raise ValueError("simulation requires a provider-declared session calendar")
+    observed = replace(dataset, bars=tuple(bar for bar in dataset.bars if bar.session_open <= end))
+    if session_gaps(observed):
+        raise ValueError("simulation history is missing declared sessions; restore the missing bars before replay")
     result = _run_window(dataset, config, start, end, signals)
     train_end, test_start = _bound(config.train_end, True), _bound(config.test_start, False)
     result.update(mode="bar_event_simulation", profile="US_cash_long_only_daily", symbol=dataset.symbol,

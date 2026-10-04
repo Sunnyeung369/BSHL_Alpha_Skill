@@ -43,7 +43,7 @@ The script generates three Markdown/JSON/SVG cards under `outputs/three-cases`. 
 | [No selected stop](examples/current/no-stop/card.md) | Confirmed Breakout | Avoid | Research Only — mock data |
 | [Overheated](examples/current/overheated/card.md) | Exhaustion | Veto | Research Only — mock data |
 
-The [0.9.1 audit](docs/AUDIT_2026-10-04.md) documents imported-card, recovery and skill-page corrections, with 147 regression cases.
+The [0.9.1 audit](docs/AUDIT_2026-10-04.md) documents imported-card, recovery and skill-page corrections, with 150 regression cases.
 
 ### What works
 
@@ -87,7 +87,7 @@ Share a small reproducible fixture, its decision time and the expected blocker. 
 
 先读[快速开始](QUICKSTART.md)，再按[工作区指南](docs/WORKSPACE.md)完成保存与复盘。真实行情接口、券商下单、后台盯盘和收益优势均未验收。市场首先限定为美股/ETF日线现金研究；其他资产需要独立适配与验证。
 
-最新 [0.9.1 深度复核](docs/AUDIT_2026-10-04.md)修复了导入卡片、过期批准、恢复与旧技能正文的缺口，147 项测试检查工程行为。
+最新 [0.9.1 深度复核](docs/AUDIT_2026-10-04.md)修复了导入卡片、过期批准、恢复与旧技能正文的缺口，150 项测试检查工程行为。
 
 欢迎提交失败样本、安装问题和真实使用反馈。标签与封面服务于准确发现和分享，不保证GitHub推荐或自然流量。当前架构和验收见[六批路线](VERSION_ROADMAP.md)；旧设计保存在[历史档案](docs/archive/v0.5-design.md)，不能作为现版本能力证明。
 

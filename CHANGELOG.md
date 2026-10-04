@@ -2,9 +2,9 @@
 
 ## 0.9.1 — Deep audit corrections, 2026-10-04
 
-Revalidate imported cards and fresh human approvals; recompute candidate/recovery chronology, sample counts and change reasons. Enforce account exposure containment and parsed time types; accept Windows BOM JSON and reject duplicate fields. Align seven active skill pages and preserve historical material. Clean-wheel CI now tests the installed journal/recovery/share loop and selects the package version dynamically.
+Block declared calendar gaps in research and simulation; preserve earlier cutoff invariance. Revalidate imported cards and fresh human approvals; recompute candidate/recovery chronology, sample counts and change reasons. Enforce account exposure containment and parsed time types; accept Windows BOM JSON and reject duplicate fields. Align seven active skill pages and preserve historical material. Clean-wheel CI now tests the installed journal/recovery/share loop and selects the package version dynamically.
 
-147 local tests pass. See the [audit](docs/AUDIT_2026-10-04.md) and [release notes](docs/RELEASE_v0.9.1.md). Social Preview Settings upload remains incomplete; no profitability or live-provider acceptance is implied.
+150 local tests pass. See the [audit](docs/AUDIT_2026-10-04.md) and [release notes](docs/RELEASE_v0.9.1.md). Social Preview Settings upload remains incomplete; no profitability or live-provider acceptance is implied.
 
 ## 0.9.0 — Offline research workflow, 2026-10-04
 

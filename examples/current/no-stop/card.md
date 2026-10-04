@@ -3,7 +3,7 @@
 **State:** Research Only
 **Data:** MOCK / SYNTHETIC
 **As of:** 2025-05-23T20:00:00+00:00
-**Analysis ID:** ad41d2fdb27a044c55b252f00403bd52a32015b6fcb76cf2beb68072e1ec75a0
+**Analysis ID:** a3854570c947723510ad7c33a4bc9593aef6acb6fbff40d051c1d730d5f7e332
 
 ## Reasons / blockers
 
@@ -17,8 +17,8 @@
 ```json
 {
   "schema_version": "1.0",
-  "rule_version": "readiness-0.6.3",
-  "analysis_id": "ad41d2fdb27a044c55b252f00403bd52a32015b6fcb76cf2beb68072e1ec75a0",
+  "rule_version": "readiness-0.6.4",
+  "analysis_id": "a3854570c947723510ad7c33a4bc9593aef6acb6fbff40d051c1d730d5f7e332",
   "symbol": "DEMO",
   "as_of": "2025-05-23T20:00:00+00:00",
   "data_mode": "mock",
@@ -155,6 +155,8 @@
       "volume_ratio": 3.0,
       "latest_bar_timestamp": "2025-05-23T20:00:00+00:00",
       "latest_bar_volume": 3000000.0,
+      "missing_session_dates": [],
+      "session_history_complete": true,
       "distance_from_ma20_atr": 1.749875840659427,
       "parent_cycle": "UP",
       "parent_week_confirmed": true,

@@ -48,4 +48,4 @@ Recovery recomputes candidate sample counts from referenced decisions, rejects a
 
 Older valid journal history can be restored without rewriting its snapshots. Older/unknown Trade Ready cards must be regenerated with current rules before new approval, sizing or current-card import. Historical restoration is archival preservation, not current permission. Keep the original export and verify restored records; no overwrite or automatic conversion is performed.
 
-Existing immutable databases created by 0.9.0 remain readable. The core strategy assumptions and hard thresholds are unchanged. New latest-bar fields change card identities under readiness-0.6.3; use new output folders and preserve old exports.
+Existing immutable databases created by 0.9.0 remain readable. The core strategy assumptions and hard thresholds are unchanged. New latest-bar fields change card identities under readiness-0.6.4; use new output folders and preserve old exports.

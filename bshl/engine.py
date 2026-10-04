@@ -14,7 +14,7 @@ from .serialization import to_jsonable
 from .structure import analyze_structure
 
 
-RULE_VERSION = "readiness-0.6.3"
+RULE_VERSION = "readiness-0.6.4"
 SCHEMA_VERSION = "1.0"
 STRONG_SOURCE_TYPES = {"filing", "transcript", "company_release", "industry_report"}
 READY_STRUCTURES = {"Confirmed Breakout", "Pullback Entry Zone"}
@@ -97,6 +97,7 @@ def _trade_score(structure, stop_defined, rr):
     parent = metrics.get("parent_cycle")
     confirmed = (structure["state"] in READY_STRUCTURES
                  and metrics.get("parent_week_confirmed") is True
+                 and metrics.get("session_history_complete") is True
                  and metrics.get("history_sufficient") is True)
     volume = metrics.get("volume_ratio")
     atr_percent = metrics.get("atr_percent")
@@ -222,6 +223,8 @@ def build_card(dataset, context: dict, as_of=None) -> dict:
         blockers.append("structure_not_confirmed")
     if metrics.get("history_sufficient") is not True:
         blockers.append("history_insufficient")
+    if metrics.get("missing_session_dates"):
+        blockers.append("declared_sessions_missing_or_unavailable")
     if not stop_defined:
         blockers.append("user_stop_missing_or_invalid")
     if not target_defined:

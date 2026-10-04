@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 import math
 
-from .market import Dataset, as_of_slice, parse_timestamp, timezone_from_name, validate_dataset
+from .market import Dataset, as_of_slice, parse_timestamp, session_gaps, timezone_from_name, validate_dataset
 
 
 @dataclass(frozen=True)
@@ -114,6 +114,8 @@ def analyze_structure(dataset: Dataset, as_of: datetime | None = None, config=No
     as_of = parse_timestamp(as_of)
     visible = as_of_slice(dataset, as_of)
     closed = [bar for bar in visible.bars if bar.is_closed]
+    missing_sessions = session_gaps(visible, closed_only=True)
+    session_history_complete = bool(visible.session_dates and closed and not missing_sessions)
     last = visible.bars[-1] if visible.bars else None
     closed_bar_confirmed = bool(last and last.is_closed)
     ma20, ma50 = moving_average(closed, config.ma_fast), moving_average(closed, config.ma_slow)
@@ -133,7 +135,7 @@ def analyze_structure(dataset: Dataset, as_of: datetime | None = None, config=No
     distance = (price - ma20) / atr if price is not None and ma20 is not None and atr and atr > 0 else None
     overheated = bool(distance is not None and distance > config.overheat_atr)
     breakdown = bool(closed_bar_confirmed and support is not None and price < support)
-    eligible = history_ok and parent_confirmed and parent == "UP" and closed_bar_confirmed
+    eligible = history_ok and session_history_complete and parent_confirmed and parent == "UP" and closed_bar_confirmed
     breakout = bool(eligible and resistance is not None and len(closed) >= 2
                     and closed[-1].close > resistance * (1 + config.breakout_buffer_percent / 100)
                     and closed[-2].close <= resistance
@@ -153,6 +155,8 @@ def analyze_structure(dataset: Dataset, as_of: datetime | None = None, config=No
         reasons.append("No bars were closed and available by the analysis time.")
     if not history_ok:
         reasons.append(f"Need at least {max(config.ma_slow, config.atr_period + 1)} closed daily bars.")
+    if missing_sessions:
+        reasons.append("Declared sessions lack closed, available bars: " + ", ".join(missing_sessions))
     if not visible.session_dates:
         reasons.append("No provider-declared session calendar; parent-week confirmation is blocked.")
     elif not parent_confirmed:
@@ -165,7 +169,7 @@ def analyze_structure(dataset: Dataset, as_of: datetime | None = None, config=No
     elif overheated:
         state = "Exhaustion"
         reasons.append("Price is beyond the experimental ATR distance limit.")
-    elif not history_ok or not parent_confirmed or not closed_bar_confirmed:
+    elif not history_ok or not session_history_complete or not parent_confirmed or not closed_bar_confirmed:
         state = "No Trade"
     elif pullback:
         state = "Pullback Entry Zone"
@@ -189,6 +193,8 @@ def analyze_structure(dataset: Dataset, as_of: datetime | None = None, config=No
                         "price": price, "volume_ratio": volume_ratio,
                         "latest_bar_timestamp": last.timestamp.isoformat() if last else None,
                         "latest_bar_volume": last.volume if last else None,
+                        "missing_session_dates": missing_sessions,
+                        "session_history_complete": session_history_complete,
                         "distance_from_ma20_atr": distance, "parent_cycle": parent,
                         "parent_week_confirmed": parent_confirmed, "parent_weeks": weekly,
                         "pivot_high_confirmed": bool(highs), "pivot_low_confirmed": bool(lows),

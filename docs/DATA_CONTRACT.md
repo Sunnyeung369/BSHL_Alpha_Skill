@@ -40,3 +40,5 @@ Current cards retain the latest visible close timestamp and volume. Journal impo
 This detects internal contradictions, not forged market truth. A card does not contain all original OHLCV, so it cannot independently reconstruct its analysis_id or rerun price structure. Preserve the original CSV/metadata/context to reproduce an analysis. Checksums are not signatures or source authentication.
 
 CLI JSON accepts UTF-8 with or without BOM and rejects duplicate fields and nonstandard NaN/Infinity. An explicitly synthetic CSV is exported with canonical mock labels even when its input transport mode is csv.
+
+Declared sessions between the first and last observed bar dates need closed, available daily records for readiness. Gaps (including delayed or provisional records) are reported explicitly and block confirmation. This checks the provider calendar, not its real-world authenticity; no leading history or future close schedule is invented.

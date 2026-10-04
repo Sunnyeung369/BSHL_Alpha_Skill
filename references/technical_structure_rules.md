@@ -24,3 +24,5 @@
 最新记录的 close timestamp、volume 和 price 随卡保留，以支持导入时复核。导入验证不会重新认证原始行情或重建全部 K 线；要重算结构必须保留 CSV 和元数据。
 
 [数据合同](../docs/DATA_CONTRACT.md) · [结构实现](../bshl/structure.py) · [历史模板](../docs/archive/technical_structure_rules-v0.5.md)
+
+Declared sessions between the first and last observed bar dates need closed, available daily records for readiness. Gaps (including delayed or provisional records) are reported explicitly and block confirmation. This checks the provider calendar, not its real-world authenticity; no leading history or future close schedule is invented.

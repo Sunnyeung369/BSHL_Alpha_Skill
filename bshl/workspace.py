@@ -186,6 +186,9 @@ def _validate_calculated_card(card):
         raise ValueError("Invalid last-bar time or volume")
     if card["final_status"] == "Trade Ready" and (at - close_at).total_seconds() > 4 * 86400:
         raise ValueError("Imported Trade Ready market data is stale")
+    if (card["final_status"] == "Trade Ready" and (metrics.get("session_history_complete") is not True
+            or metrics.get("missing_session_dates") != [])):
+        raise ValueError("Imported Trade Ready history has missing declared sessions")
     if (metrics.get("price") != plan["entry_price"]
             or context.get("stop_loss_price") != plan["stop_loss_price"]
             or context.get("target_price") != plan["target_price"]):

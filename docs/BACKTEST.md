@@ -21,3 +21,5 @@ It also records average winning/losing P&L after costs, realized win rate, faile
 `train_end` must precede `test_start`. The two windows run with independent cash and fixed parameters. Earlier visible history may warm up the holdout, including a prior signal for its first eligible open. No optimizer or statistical edge certification is implemented. Fix the split and parameters before inspecting holdout results; the software cannot detect manual retuning. Custom Python callbacks receive immutable visible history but cannot be sandboxed against a future-data closure.
 
 `performance_validated` always remains false. Real adoption requires independent, provenance-checked datasets, sample adequacy and sensitivity analysis. A successful unit test verifies mechanics, not profitable trading.
+
+Simulation requires a declared session calendar. Missing declared daily records inside observed history through the report cutoff are rejected, rather than skipping an unknown stop/target session. Removing only future sessions beyond an earlier cutoff cannot change that report. The provider calendar still needs independent verification.

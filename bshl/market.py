@@ -244,3 +244,21 @@ def as_of_slice(dataset: Dataset, as_of: datetime) -> Dataset:
     return replace(dataset, bars=tuple(bar for bar in dataset.bars
                                       if parse_timestamp(bar.timestamp) <= cutoff
                                       and parse_timestamp(bar.available_at) <= cutoff))
+
+
+def session_gaps(dataset: Dataset, *, closed_only=False) -> list[str]:
+    """Declared gaps between the snapshot's first and last local bar dates.
+
+    Do not invent holidays, leading history or future close schedules. Missing
+    or delayed/provisional bars inside the observed interval cannot establish
+    contiguous closed history. Simulation can check existence independently
+    of publication with closed_only=False.
+    """
+    if not dataset.bars:
+        return []
+    zone = timezone_from_name(dataset.timezone)
+    first = dataset.bars[0].timestamp.astimezone(zone).date()
+    last = dataset.bars[-1].timestamp.astimezone(zone).date()
+    present = {bar.timestamp.astimezone(zone).date() for bar in dataset.bars
+               if not closed_only or bar.is_closed}
+    return [day.isoformat() for day in dataset.session_dates if first <= day <= last and day not in present]

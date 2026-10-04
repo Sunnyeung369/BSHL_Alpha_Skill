@@ -10,6 +10,8 @@ import unittest
 
 from bshl.engine import build_card
 from bshl.cli import main
+from bshl.backtest import BacktestConfig, run_backtest
+from datetime import date, timedelta
 from bshl.market import load_dataset, validate_dataset
 from bshl.workspace import Workspace, canonical, digest, validate_card
 from scoring.position_risk_score import PositionRiskScorer
@@ -26,6 +28,33 @@ def ready_fixture():
 
 
 class CardAuditTests(unittest.TestCase):
+    def test_missing_or_late_declared_session_blocks_otherwise_ready_card(self):
+        dataset, good = ready_fixture()
+        context = good["context"]
+        missing_day = dataset.bars[-2].timestamp.date().isoformat()
+        late = replace(dataset.bars[-2], available_at=dataset.bars[-1].available_at + timedelta(days=1))
+        for bars in (dataset.bars[:-2] + dataset.bars[-1:], dataset.bars[:-2] + (late, dataset.bars[-1])):
+            result = build_card(replace(dataset, bars=bars), context, dataset.bars[-1].available_at)
+            self.assertNotEqual(result["final_status"], "Trade Ready")
+            self.assertIn("declared_sessions_missing_or_unavailable", result["blockers"])
+            self.assertIn(missing_day, result["technical_structure"]["metrics"]["missing_session_dates"])
+
+    def test_simulation_rejects_missing_calendar_or_internal_daily_bar(self):
+        dataset, _ = ready_fixture()
+        config = BacktestConfig(train_end=date(2025, 4, 30), test_start=date(2025, 5, 1))
+        for changed in (replace(dataset, session_dates=()),
+                        replace(dataset, bars=dataset.bars[:-2] + dataset.bars[-1:])):
+            with self.assertRaisesRegex(ValueError, "calendar|missing declared sessions"):
+                run_backtest(changed, config)
+
+    def test_missing_future_session_does_not_change_prior_cutoff_simulation(self):
+        dataset, _ = ready_fixture()
+        cutoff = dataset.bars[-3].timestamp
+        config = BacktestConfig(train_end=date(2025, 4, 30), test_start=date(2025, 5, 1), end_date=cutoff)
+        original = run_backtest(dataset, config)
+        changed = replace(dataset, bars=dataset.bars[:-2] + dataset.bars[-1:])
+        self.assertEqual(run_backtest(changed, config), original)
+
     def test_untouched_imported_card_is_accepted(self):
         _, card = ready_fixture()
         self.assertEqual(card["final_status"], "Trade Ready")

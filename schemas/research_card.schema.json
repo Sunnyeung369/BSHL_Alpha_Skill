@@ -895,7 +895,10 @@
       "if": {
         "properties": {
           "rule_version": {
-            "const": "readiness-0.6.3"
+            "enum": [
+              "readiness-0.6.3",
+              "readiness-0.6.4"
+            ]
           }
         }
       },
@@ -927,6 +930,71 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "rule_version": {
+            "const": "readiness-0.6.4"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "technical_structure": {
+            "properties": {
+              "metrics": {
+                "required": [
+                  "session_history_complete",
+                  "missing_session_dates"
+                ],
+                "properties": {
+                  "session_history_complete": {
+                    "type": "boolean"
+                  },
+                  "missing_session_dates": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "final_status": {
+                  "const": "Trade Ready"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "technical_structure": {
+                  "properties": {
+                    "metrics": {
+                      "properties": {
+                        "session_history_complete": {
+                          "const": true
+                        },
+                        "missing_session_dates": {
+                          "maxItems": 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     }
   ]
