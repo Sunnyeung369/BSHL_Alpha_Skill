@@ -41,7 +41,7 @@ class StructureConfig:
 
 
 def moving_average(bars, period):
-    return sum(bar.close for bar in bars[-period:]) / period if len(bars) >= period else None
+    return math.fsum(bar.close for bar in bars[-period:]) / period if len(bars) >= period else None
 
 
 def wilder_atr(bars, period=14):
@@ -54,7 +54,7 @@ def wilder_atr(bars, period=14):
                   abs(bar.high - bars[index - 1].close) if index else 0,
                   abs(bar.low - bars[index - 1].close) if index else 0)
               for index, bar in enumerate(bars)]
-    atr = sum(ranges[:period]) / period
+    atr = math.fsum(ranges[:period]) / period
     for true_range in ranges[period:]:
         atr = ((period - 1) * atr + true_range) / period
     return atr
@@ -128,7 +128,7 @@ def analyze_structure(dataset: Dataset, as_of: datetime | None = None, config=No
     support = lows[-1][1] if lows else None
     history_ok = len(closed) >= max(config.ma_slow, config.atr_period + 1)
     price = last.close if last else None
-    avg_volume = sum(bar.volume for bar in closed[-21:-1]) / 20 if len(closed) >= 21 else None
+    avg_volume = math.fsum(bar.volume for bar in closed[-21:-1]) / 20 if len(closed) >= 21 else None
     volume_ratio = closed[-1].volume / avg_volume if avg_volume and closed else None
     distance = (price - ma20) / atr if price is not None and ma20 is not None and atr and atr > 0 else None
     overheated = bool(distance is not None and distance > config.overheat_atr)

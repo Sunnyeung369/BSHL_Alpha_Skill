@@ -25,6 +25,8 @@ Evidence needs a claim, HTTP(S) source URL, `published_at`, `available_at`, `sou
 
 Daily MA20/50, Wilder ATR14, strict pivots with two bars on each side. Pivot confirmation needs the right bars already available. Breakout: closed close above last confirmed resistance + 0.1%, prior close <= resistance, volume >= 1.3 times prior 20 bars, sufficient history and completed parent-week UP direction. Pullback checks the last five bars and a 0.5 ATR tolerance. Overheat is > 3 ATR above MA20.
 
+MA, ATR seed and volume averages use `math.fsum` to keep fixture calculations independent of the builtin float summation changes introduced in [Python 3.12](https://docs.python.org/3.12/whatsnew/3.12.html#other-language-changes). The six CI environments compare complete maintained outputs, not only final states.
+
 Parent weeks require all declared sessions and coverage beyond the week boundary. Missing calendar blocks parent confirmation. Rules do not invent exchange holidays. The result describes this ruleset; it is not a universal definition of technical analysis.
 
 ## Output

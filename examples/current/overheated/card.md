@@ -3,7 +3,7 @@
 **State:** Research Only
 **Data:** MOCK / SYNTHETIC
 **As of:** 2025-05-23T20:00:00+00:00
-**Analysis ID:** 905eec505a2330e66cd502e61836e18cb25fcd7ec28d4ece32b1662cc4fd75e8
+**Analysis ID:** 375652d78f069b5ad8c8617bbbba46c9829c65d3aadb03d219bf67081706d510
 
 ## Reasons / blockers
 
@@ -19,8 +19,8 @@
 ```json
 {
   "schema_version": "1.0",
-  "rule_version": "readiness-0.6.1",
-  "analysis_id": "905eec505a2330e66cd502e61836e18cb25fcd7ec28d4ece32b1662cc4fd75e8",
+  "rule_version": "readiness-0.6.2",
+  "analysis_id": "375652d78f069b5ad8c8617bbbba46c9829c65d3aadb03d219bf67081706d510",
   "symbol": "DEMO",
   "as_of": "2025-05-23T20:00:00+00:00",
   "data_mode": "mock",

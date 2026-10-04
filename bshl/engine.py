@@ -14,7 +14,7 @@ from .serialization import to_jsonable
 from .structure import analyze_structure
 
 
-RULE_VERSION = "readiness-0.6.1"
+RULE_VERSION = "readiness-0.6.2"
 SCHEMA_VERSION = "1.0"
 STRONG_SOURCE_TYPES = {"filing", "transcript", "company_release", "industry_report"}
 READY_STRUCTURES = {"Confirmed Breakout", "Pullback Entry Zone"}

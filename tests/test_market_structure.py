@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from bshl.market import Bar, CSV_COLUMNS, Dataset, as_of_slice, load_dataset, parse_timestamp, validate_dataset
 from bshl.structure import (StructureConfig, analyze_structure, completed_weekly_bars,
@@ -38,6 +39,12 @@ def with_pivots(dataset):
 
 
 class DatasetTests(unittest.TestCase):
+    def test_ma_does_not_depend_on_version_specific_builtin_sum(self):
+        dataset = fixture()
+        expected = moving_average(dataset.bars, 50)
+        with patch("bshl.structure.sum", side_effect=AssertionError("builtin sum must not determine MA"), create=True):
+            self.assertEqual(moving_average(dataset.bars, 50), expected)
+
     def test_frozen_records_and_valid_snapshot(self):
         dataset = fixture()
         validate_dataset(dataset)
