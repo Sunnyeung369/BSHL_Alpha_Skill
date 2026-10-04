@@ -64,3 +64,5 @@ Thumbs.db
 data/cache/
 replay/cache/
 evals/results/
+outputs/
+state.json

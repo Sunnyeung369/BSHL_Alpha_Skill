@@ -12,8 +12,9 @@ The six-batch upgrade is in progress. The legacy prototype did not establish a t
 | Capability | Status |
 |---|---|
 | Evidence and contradiction workflows | Available as research instructions |
-| Strict scoring and risk gates | Integrity repair under verification |
-| CSV price structure, event replay, watchlists | Follow the [roadmap](VERSION_ROADMAP.md) |
+| Strict scoring and risk gates | Regression tested; unknowns cannot pass |
+| CSV daily structure and research cards | Offline CLI, source/time checks and schema tests |
+| Event replay and watchlists | Follow the [roadmap](VERSION_ROADMAP.md) |
 | Legacy Yahoo/SEC/Crypto/news adapters | Placeholders; real calls must fail explicitly |
 | Autonomous orders | Not included |
 
@@ -34,6 +35,6 @@ python -m unittest discover -s tests -v
 python scripts/check_repository.py
 ```
 
-Python 3.10+; runtime uses the standard library. CI also installs the optional JSON Schema validator. Windows, Linux and macOS jobs are configured; their live results determine verification status.
+Python 3.10+; Windows additionally installs `tzdata` for IANA timezones. CI installs the optional JSON Schema validator. Windows, Linux and macOS jobs are configured; their live results determine verification status. Install the environment before running the checks.
 
 MIT license. Research assistance and reproducibility are the purpose; results are not profitability guarantees.

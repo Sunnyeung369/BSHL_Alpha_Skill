@@ -1,0 +1,48 @@
+{
+  "alpha_scores": {
+    "demand_inflection": 15,
+    "supply_chain_bottleneck": 15,
+    "company_benefit_certainty": 15,
+    "evidence_quality": 15,
+    "catalyst_timing": 10,
+    "valuation_mismatch": 10,
+    "competition": 10,
+    "contradiction_clarity": 10
+  },
+  "pricing_scores": {
+    "sector_trend": 15,
+    "relative_strength": 15,
+    "capital_inflow": 15,
+    "crowding": 15,
+    "valuation_digestion": 15,
+    "risk_appetite": 15,
+    "catalyst_priced": 10
+  },
+  "risk_checks": {
+    "liquidity": true,
+    "volatility": true,
+    "evidence_quality": true,
+    "social_crowding": true,
+    "earnings_risk": true,
+    "regulatory_uncertainty": true,
+    "price_location": true,
+    "stop_loss_distance": true,
+    "position_exposure": true,
+    "correlation": true
+  },
+  "stop_loss_price": 121.0,
+  "target_price": 145.0,
+  "evidence": [
+    {
+      "id": "SYNTHETIC-001",
+      "claim": "Fictional fixture for exercising the pipeline, not an investment thesis",
+      "source_type": "company_release",
+      "source_url": "https://example.invalid/bshl/fixture",
+      "published_at": "2025-01-01T00:00:00+00:00",
+      "available_at": "2025-01-01T00:00:00+00:00",
+      "evidence_strength": "strong",
+      "supports_or_refutes": "supports",
+      "kill_switch": false
+    }
+  ]
+}
