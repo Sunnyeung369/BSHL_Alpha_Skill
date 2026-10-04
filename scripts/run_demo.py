@@ -16,17 +16,25 @@ def run(output):
     started = time.perf_counter()
     assets = Path(__file__).resolve().parents[1] / "bshl/assets"
     results = []
-    for scenario in ("breakout", "no-stop", "overheated"):
-        name = "overheated" if scenario == "overheated" else "breakout"
+    for scenario in ("breakout", "no-stop", "overheated", "pullback-rebound", "breakdown"):
+        name = scenario if scenario in ("pullback-rebound", "breakdown") else ("overheated" if scenario == "overheated" else "breakout")
         data = load_dataset(assets / (name + ".csv"), assets / (name + ".metadata.json"))
         context = json.loads((assets / "demo.context.json").read_text(encoding="utf-8"))
         if scenario == "no-stop":
             context.pop("stop_loss_price")
+        if scenario == "breakdown":
+            context["stop_loss_price"] = 119.5
         card = build_card(data, context)
         assert card["is_mock"] and card["final_status"] == "Research Only"
         if scenario == "breakout":
             assert card["technical_structure"]["state"] == "Confirmed Breakout"
             assert card["simulation_status"] == "Trade Ready"
+        elif scenario == "pullback-rebound":
+            assert card["technical_structure"]["state"] == "Pullback Entry Zone"
+            assert card["simulation_status"] == "Trade Ready"
+        elif scenario == "breakdown":
+            assert card["technical_structure"]["state"] == "Breakdown"
+            assert card["simulation_status"] == "Veto"
         elif scenario == "no-stop":
             assert "user_stop_missing_or_invalid" in card["blockers"]
             assert card["simulation_status"] != "Trade Ready"

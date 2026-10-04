@@ -15,21 +15,31 @@ while len(sessions) < 100:
     if day.weekday() < 5:
         sessions.append(day)
     day += timedelta(days=1)
-for scenario in ("breakout", "overheated"):
+for scenario in ("breakout", "overheated", "pullback-rebound", "breakdown"):
     rows = []
     previous = 100.0
     for index, day in enumerate(sessions):
         close = round(100 + index * .25 + sin(index / 4) * .3, 4)
         if 88 <= index < 99:
-            close = [120.5, 121, 124, 123, 122, 121.5, 122, 122.5, 123, 123.5, 124][index - 88]
+            if scenario == "pullback-rebound":
+                close = [120.5, 121, 124, 123, 122, 121.5, 122, 123, 124, 126, 124.9][index - 88]
+            elif scenario == "breakdown":
+                close = [120.5, 121, 124, 123, 122, 121.5, 122, 121.5, 121, 120.5, 120][index - 88]
+            else:
+                close = [120.5, 121, 124, 123, 122, 121.5, 122, 122.5, 123, 123.5, 124][index - 88]
         if index == 99:
-            close = 126 if scenario == "breakout" else 155
+            if scenario == "breakout": close = 126
+            elif scenario == "overheated": close = 155
+            elif scenario == "pullback-rebound": close = 126
+            elif scenario == "breakdown": close = 119
         opening = round(previous + .1, 4)
+        if scenario == "pullback-rebound" and index == 99:
+            opening = 124.9
         stamp = datetime.combine(day, time(16), ZoneInfo("America/New_York")).astimezone(timezone.utc)
         session_open = datetime.combine(day, time(9, 30), ZoneInfo("America/New_York")).astimezone(timezone.utc)
         rows.append({"timestamp": stamp.isoformat(), "open": opening,
             "high": round(max(opening, close) + .8, 4),
-            "low": round(min(opening, close) - .8, 4), "close": close,
+            "low": 124.9 if scenario == "pullback-rebound" and index == 99 else round(min(opening, close) - .8, 4), "close": close,
             "volume": 3000000 if index == 99 else 1000000,
             "available_at": stamp.isoformat(), "is_closed": "true", "session_open": session_open.isoformat()})
         previous = close
