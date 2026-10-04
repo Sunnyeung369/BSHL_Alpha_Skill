@@ -80,6 +80,12 @@ class EngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_card(dataset, context)
 
+    def test_duplicate_evidence_identity_rejected(self):
+        dataset, context = fixture()
+        context["evidence"].append(copy.deepcopy(context["evidence"][0]))
+        with self.assertRaises(ValueError):
+            build_card(dataset, context)
+
     def test_future_bar_change_does_not_repaint_visible_structure(self):
         dataset, context = fixture()
         cutoff = dataset.bars[-2].available_at
@@ -96,7 +102,7 @@ class EngineTests(unittest.TestCase):
         mock = build_card(dataset, context)
         validator.validate(mock)
         # Exercises the non-mock code path; this fixture is not live market evidence.
-        ready = build_card(replace(dataset, is_mock=False, data_mode="csv"), context)
+        ready = build_card(replace(dataset, is_mock=False, data_mode="csv", exchange="NYSE"), context)
         self.assertEqual(ready["final_status"], "Trade Ready")
         validator.validate(ready)
         for section, key, value in (("risk_governor", "decision", "Wait"),
@@ -107,4 +113,7 @@ class EngineTests(unittest.TestCase):
             self.assertTrue(list(validator.iter_errors(changed)))
         changed = copy.deepcopy(mock)
         changed["final_status"] = "Trade Ready"
+        self.assertTrue(list(validator.iter_errors(changed)))
+        changed = copy.deepcopy(ready)
+        changed["risk_governor"]["checks"] = [changed["risk_governor"]["checks"][0]] * 10
         self.assertTrue(list(validator.iter_errors(changed)))

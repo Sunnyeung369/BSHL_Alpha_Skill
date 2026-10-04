@@ -39,6 +39,14 @@ def digest(value):
 def validate_card(card):
     if not isinstance(card, dict) or card.get("schema_version") != "1.0":
         raise ValueError("Expected research card schema_version 1.0")
+    for field in ("source", "technical_structure", "trade_readiness", "risk_governor", "evidence", "trade_plan", "context"):
+        if not isinstance(card.get(field), dict):
+            raise ValueError(f"Card {field} must be an object")
+    for field in ("alpha_thesis", "market_pricing"):
+        if card.get(field) is not None and not isinstance(card[field], dict):
+            raise ValueError(f"Card {field} must be an object or null")
+    if not isinstance(card.get("blockers"), list) or not all(isinstance(item, str) for item in card["blockers"]):
+        raise ValueError("Invalid card blockers")
     if not isinstance(card.get("analysis_id"), str) or not re.fullmatch(r"[0-9a-f]{64}", card["analysis_id"]):
         raise ValueError("Invalid analysis_id")
     validate_symbol(card.get("symbol"))
@@ -49,13 +57,42 @@ def validate_card(card):
         raise ValueError("Mock cards must remain Research Only")
     if not isinstance(card.get("rule_version"), str) or not card["rule_version"]:
         raise ValueError("Missing rule version")
+    plan = card["trade_plan"]
+    entry, stop, target = (plan.get(key) for key in ("entry_price", "stop_loss_price", "target_price"))
+    if type(entry) not in (int, float) or not math.isfinite(entry) or entry <= 0:
+        raise ValueError("Invalid card entry price")
+    for value in (stop, target):
+        if value is not None and (type(value) not in (int, float) or not math.isfinite(value) or value <= 0):
+            raise ValueError("Invalid selected level")
+    if (type(plan.get("stop_loss_defined")) is not bool or type(plan.get("target_defined")) is not bool
+            or plan["stop_loss_defined"] != (stop is not None and stop < entry)
+            or plan["target_defined"] != (target is not None and target > entry)):
+        raise ValueError("Inconsistent selected-level flags")
     if card["final_status"] == "Trade Ready":
         from scoring.risk_governor_score import RiskGovernorScorer
         risk = card.get("risk_governor", {})
         checks = risk.get("checks", [])
+        if not isinstance(checks, list) or not all(isinstance(item, dict) for item in checks):
+            raise ValueError("Invalid risk checklist")
         names = [item.get("name") for item in checks]
         plan = card.get("trade_plan", {})
         trade = card.get("trade_readiness", {})
+        source = card.get("source", {})
+        structure = card.get("technical_structure", {})
+        metrics = structure.get("metrics", {})
+        if (source.get("market") != "US" or source.get("currency") != "USD" or source.get("timeframe") != "1d"
+                or source.get("asset_type") not in ("US_STOCK", "ETF") or source.get("adjustment") != "unadjusted"
+                or source.get("exchange") not in ("NYSE", "NASDAQ", "NYSE_ARCA", "CBOE")
+                or structure.get("state") not in ("Confirmed Breakout", "Pullback Entry Zone")
+                or structure.get("closed_bar_confirmed") is not True
+                or metrics.get("parent_week_confirmed") is not True or metrics.get("history_sufficient") is not True
+                or card.get("evidence", {}).get("strong_support_count", 0) < 1
+                or card.get("evidence", {}).get("active_kill_switch_count") != 0
+                or (card.get("alpha_thesis") or {}).get("grade") not in ("A", "B", "C")
+                or (card.get("alpha_thesis") or {}).get("breakdown", {}).get("evidence_quality", 0) < 10
+                or (card.get("market_pricing") or {}).get("grade") not in ("A", "B", "C")
+                or type(trade.get("total")) not in (int, float) or not 85 <= trade["total"] <= 100):
+            raise ValueError("Trade Ready card lacks a supported evidence/structure profile")
         if (set(names) != set(RiskGovernorScorer.ITEMS) or len(names) != 10
                 or not all(item.get("status") is True for item in checks)
                 or risk.get("decision") != "Pass" or risk.get("missing_checks") != []
@@ -68,6 +105,9 @@ def validate_card(card):
             raise ValueError("Invalid trade levels")
         if not 0 < stop < entry < target or (target - entry) / (entry - stop) < 2:
             raise ValueError("Invalid reward/risk")
+        ratio = (target - entry) / (entry - stop)
+        if type(plan.get("reward_risk_ratio")) not in (int, float) or abs(plan["reward_risk_ratio"] - ratio) > 1e-9 or (entry - stop) / entry > .10:
+            raise ValueError("Inconsistent ratio or excessive stop distance")
     return to_jsonable(card)
 
 

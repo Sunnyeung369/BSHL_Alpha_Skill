@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "rule_version": "readiness-0.6.0",
-  "analysis_id": "c05ece93f07a2bec63504193029de65be51e2f401ba07377817f8b723a97c3c5",
+  "rule_version": "readiness-0.6.1",
+  "analysis_id": "779b30f9ba261dbebd0767e8d7cbaad65fcf9f23baef581e2cdbc33beda28535",
   "symbol": "DEMO",
   "as_of": "2025-05-23T20:00:00+00:00",
   "data_mode": "mock",
@@ -14,6 +14,7 @@
     "timezone": "America/New_York",
     "adjustment": "unadjusted",
     "asset_type": "ETF",
+    "exchange": "SYNTHETIC-US",
     "session_dates": [
       "2025-01-06",
       "2025-01-07",

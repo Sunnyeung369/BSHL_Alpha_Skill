@@ -3,7 +3,7 @@
 **State:** Research Only
 **Data:** MOCK / SYNTHETIC
 **As of:** 2025-05-23T20:00:00+00:00
-**Analysis ID:** e4bfc3f53980b0eddd0fbeaa9da5d868a66ba20eeebda38e3919fc1946fe7a12
+**Analysis ID:** 905eec505a2330e66cd502e61836e18cb25fcd7ec28d4ece32b1662cc4fd75e8
 
 ## Reasons / blockers
 
@@ -19,8 +19,8 @@
 ```json
 {
   "schema_version": "1.0",
-  "rule_version": "readiness-0.6.0",
-  "analysis_id": "e4bfc3f53980b0eddd0fbeaa9da5d868a66ba20eeebda38e3919fc1946fe7a12",
+  "rule_version": "readiness-0.6.1",
+  "analysis_id": "905eec505a2330e66cd502e61836e18cb25fcd7ec28d4ece32b1662cc4fd75e8",
   "symbol": "DEMO",
   "as_of": "2025-05-23T20:00:00+00:00",
   "data_mode": "mock",
@@ -33,6 +33,7 @@
     "timezone": "America/New_York",
     "adjustment": "unadjusted",
     "asset_type": "ETF",
+    "exchange": "SYNTHETIC-US",
     "session_dates": [
       "2025-01-06",
       "2025-01-07",

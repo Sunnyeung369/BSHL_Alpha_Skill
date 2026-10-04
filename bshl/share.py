@@ -3,6 +3,7 @@ from html import escape
 from pathlib import Path
 import textwrap
 from .workspace import validate_card
+from .files import write_text
 
 
 def render_svg(card):
@@ -30,11 +31,4 @@ def render_svg(card):
 def write_share(card, path):
     target = Path(path)
     content = render_svg(card)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        with target.open("x", encoding="utf-8") as handle:
-            handle.write(content)
-    except FileExistsError:
-        if target.read_text(encoding="utf-8") != content:
-            raise ValueError("Share output exists with different content; use a new path")
-    return target
+    return write_text(content, target)

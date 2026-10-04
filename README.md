@@ -66,13 +66,14 @@ Verify with the same environment interpreter:
 ```shell
 python -m unittest discover -s tests -v
 python scripts/check_repository.py
+python scripts/validate_examples.py
 ```
 
 CI runs Windows, Linux and macOS on Python 3.10 and 3.13. [The roadmap](VERSION_ROADMAP.md) records implementation acceptance; tests do not prove investment performance.
 
 ### Contribute a failure before a claim
 
-Share a small reproducible fixture, its decision time and the expected blocker. Read [Contributing](CONTRIBUTING.md). A useful first contribution is an exchange-calendar gap, a delayed publication or an ambiguous stop/target case. Real user feedback is welcome; none is fabricated. Stars/bookmarks can help others find the project, but do not validate a strategy.
+Share a small reproducible fixture, its decision time and the expected blocker. Read [Contributing](CONTRIBUTING.md), [the adapter boundary](docs/ADAPTERS.md) and [maintenance](docs/MAINTENANCE.md). A useful first contribution is an exchange-calendar gap, a delayed publication or an ambiguous stop/target case. Real user feedback is welcome; none is fabricated. Stars/bookmarks can help others find the project, but do not validate a strategy.
 
 ## 中文
 

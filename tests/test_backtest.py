@@ -164,6 +164,26 @@ class BacktestTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             run_backtest(fixture(), config(), lambda snapshot: TradeSignal(True, 120))
 
+    def test_delayed_final_publication_marks_without_backdated_liquidation(self):
+        dataset = fixture()
+        last = dataclasses.replace(dataset.bars[-1], available_at=dataset.bars[-1].timestamp + timedelta(hours=1))
+        result = run_backtest(dataclasses.replace(dataset, bars=(*dataset.bars[:-1], last)), config(), first_signal)
+        self.assertEqual(result["end_valuation_method"], "mark_to_market_without_retroactive_exit")
+        self.assertIsNotNone(result["open_position"])
+        self.assertEqual(result["trade_count"], 0)
+        self.assertIsNotNone(result["final_value"])
+
+    def test_trade_metrics_account_for_exposure_costs_and_small_sample(self):
+        dataset = fixture()
+        conflict = dataclasses.replace(dataset.bars[1], high=125, low=85)
+        result = run_backtest(dataclasses.replace(dataset, bars=(dataset.bars[0], conflict, *dataset.bars[2:])), config(), first_signal)
+        self.assertEqual(result["average_loss_after_costs"], -1000)
+        self.assertIsNone(result["average_win_after_costs"])
+        self.assertEqual(result["exposure_seconds"], 6.5 * 3600)
+        self.assertAlmostEqual(result["turnover_notional_over_initial_capital"], .19)
+        self.assertEqual(result["sample_evidence"], "insufficient")
+        self.assertEqual(len(result["failed_trade_samples"]), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

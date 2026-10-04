@@ -9,6 +9,7 @@
   "data_mode": "mock",
   "is_mock": true,
   "asset_type": "ETF",
+  "exchange": "SYNTHETIC-US",
   "retrieved_at": "2025-05-23T20:00:00+00:00",
   "session_dates": [
     "2025-01-06",

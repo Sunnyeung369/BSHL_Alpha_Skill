@@ -9,9 +9,9 @@ from datetime import date, datetime, time, timezone
 import math
 from typing import Callable, Optional
 
-from .market import Bar, Dataset, validate_dataset
+from .market import Bar, Dataset, parse_timestamp, validate_dataset
 from .serialization import to_jsonable
-from .structure import wilder_atr
+from .structure import moving_average, wilder_atr
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -119,6 +119,8 @@ def _run_window(dataset: Dataset, config: BacktestConfig, start: datetime, end: 
     pending = None
     visible = []
     newest_decision_bar = None
+    traded_notional = 0.0
+    regimes = []
     trades, equity_curve, skipped = [], [], []
     events = []
     for index, bar in enumerate(bars):
@@ -128,10 +130,11 @@ def _run_window(dataset: Dataset, config: BacktestConfig, start: datetime, end: 
     events.sort(key=lambda event: (event[0], event[1], event[2]))
 
     def sell(raw_price, at, reason):
-        nonlocal cash, position
+        nonlocal cash, position, traded_notional
         fill = raw_price * (1 - execution_drag)
         exit_fee = position["units"] * fill * commission
         proceeds = position["units"] * fill - exit_fee
+        traded_notional += position["units"] * fill
         cash += proceeds
         pnl = proceeds - position["entry_total"]
         trades.append({**position, "exit_at": at.isoformat(), "exit_price": fill,
@@ -155,6 +158,10 @@ def _run_window(dataset: Dataset, config: BacktestConfig, start: datetime, end: 
                 continue
             newest_decision_bar = latest.timestamp
             snapshot = SignalSnapshot(dataset.symbol, at, tuple(visible))
+            if at >= start:
+                average = moving_average(visible, 20)
+                regimes.append({"as_of": at.isoformat(), "price_position_vs_ma20":
+                    "unknown" if average is None else "above" if latest.close > average else "below" if latest.close < average else "at"})
             signal = callback(snapshot) if callback is not None else breakout_signal(snapshot, config)
             if signal is not None:
                 _check_signal(signal, latest.close)
@@ -189,6 +196,7 @@ def _run_window(dataset: Dataset, config: BacktestConfig, start: datetime, end: 
                 continue
             entry_fee = units * fill * commission
             total = units * fill + entry_fee
+            traded_notional += units * fill
             cash -= total
             position = {"entry_at": at.isoformat(), "decision_at": decision_at.isoformat(),
                 "signal_bar": signal_bar.isoformat(), "raw_entry": bar.open,
@@ -216,11 +224,14 @@ def _run_window(dataset: Dataset, config: BacktestConfig, start: datetime, end: 
     last = window_bars[-1] if window_bars else None
     complete_last = last is not None and last.timestamp <= end and last.is_closed and last.available_at <= end
     valuation_known = position is None or complete_last
-    if position is not None and valuation_known:
+    if position is not None and complete_last and last.available_at <= last.timestamp:
         sell(last.close, last.timestamp, "window_end_close")
         if equity_curve:
             equity_curve[-1]["equity"] = cash
-    final_value = cash if valuation_known and window_bars else None
+    final_value = (cash + position["units"] * last.close if position is not None else cash) if valuation_known and window_bars else None
+    exposure_seconds = sum((parse_timestamp(trade["exit_at"]) - parse_timestamp(trade["entry_at"])).total_seconds() for trade in trades)
+    if position is not None:
+        exposure_seconds += max(0, (end - parse_timestamp(position["entry_at"])).total_seconds())
     peak, max_drawdown = config.initial_capital, 0.0
     for row in equity_curve:
         if row["equity"] is not None:
@@ -234,14 +245,25 @@ def _run_window(dataset: Dataset, config: BacktestConfig, start: datetime, end: 
         value = config.initial_capital - units * entry * (1 + commission) + units * last.close * (1 - execution_drag) * (1 - commission)
         benchmark.update(return_after_costs=value / config.initial_capital - 1, status="simulated",
             start_at=first.session_open.isoformat(), end_at=last.timestamp.isoformat())
+    wins = [trade for trade in trades if trade["pnl_after_costs"] > 0]
+    losses = [trade for trade in trades if trade["pnl_after_costs"] < 0]
     return {"window": {"start": start.isoformat(), "end": end.isoformat()},
         "final_value": final_value, "return_after_costs": final_value / config.initial_capital - 1 if final_value is not None else None,
         "valuation_status": "empty_window" if not window_bars else "known" if valuation_known else "unknown", "open_position": position,
+        "end_valuation_method": "mark_to_market_without_retroactive_exit" if position is not None and valuation_known else "cash" if position is None else "unknown",
         "trades": trades, "equity_curve": equity_curve, "max_drawdown": max_drawdown,
         "max_drawdown_complete": valuation_known and all(row["equity"] is not None for row in equity_curve),
         "expectancy_r_after_costs": sum(t["r_after_costs"] for t in trades) / len(trades) if trades else None,
         "trade_count": len(trades), "total_costs": sum(t["total_costs"] for t in trades) +
             (position["entry_fee"] + position["units"] * (position["entry_price"] - position["raw_entry"]) if position else 0),
+        "win_rate": len(wins) / len(trades) if trades else None,
+        "average_win_after_costs": sum(item["pnl_after_costs"] for item in wins) / len(wins) if wins else None,
+        "average_loss_after_costs": sum(item["pnl_after_costs"] for item in losses) / len(losses) if losses else None,
+        "exposure_seconds": exposure_seconds,
+        "exposure_time_fraction": exposure_seconds / (end - start).total_seconds() if end > start and window_bars else None,
+        "turnover_notional_over_initial_capital": traded_notional / config.initial_capital,
+        "sample_evidence": "insufficient" if len(trades) < 30 else "unvalidated",
+        "price_regime_diagnostics": regimes, "failed_trade_samples": losses,
         "benchmark": benchmark, "skipped": skipped}
 
 

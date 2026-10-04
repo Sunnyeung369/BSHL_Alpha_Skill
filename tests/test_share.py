@@ -25,5 +25,5 @@ class ShareTests(unittest.TestCase):
             write_share(card(), path)
             write_share(card(), path)
             changed = card({"target_price": 150})
-            with self.assertRaises(ValueError):
+            with self.assertRaises(FileExistsError):
                 write_share(changed, path)

@@ -13,6 +13,7 @@ from bshl.engine import build_card
 from bshl.market import load_dataset
 from bshl.portfolio import size_plan
 from bshl.workspace import Workspace, digest
+from bshl.workspace import validate_card
 
 ASSETS = Path(__file__).resolve().parents[1] / "bshl/assets"
 
@@ -173,3 +174,15 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(result["whole_share_cap"], 0)
         with self.assertRaises(ValueError):
             size_plan(self.card, account | {"currency": "HKD"})
+
+    def test_invalid_card_shapes_and_missing_research_cannot_be_ready(self):
+        changed = copy.deepcopy(self.card)
+        changed["final_status"] = "Trade Ready"
+        changed["is_mock"] = False
+        changed["alpha_thesis"] = None
+        with self.assertRaises(ValueError):
+            validate_card(changed)
+        changed = copy.deepcopy(self.card)
+        changed["trade_plan"]["stop_loss_defined"] = "true"
+        with self.assertRaises(ValueError):
+            validate_card(changed)

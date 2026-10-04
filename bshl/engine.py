@@ -14,7 +14,7 @@ from .serialization import to_jsonable
 from .structure import analyze_structure
 
 
-RULE_VERSION = "readiness-0.6.0"
+RULE_VERSION = "readiness-0.6.1"
 SCHEMA_VERSION = "1.0"
 STRONG_SOURCE_TYPES = {"filing", "transcript", "company_release", "industry_report"}
 READY_STRUCTURES = {"Confirmed Breakout", "Pullback Entry Zone"}
@@ -24,7 +24,8 @@ def _url(value):
     if not isinstance(value, str):
         return False
     parsed = urlparse(value)
-    return parsed.scheme in ("https", "http") and bool(parsed.hostname)
+    return (parsed.scheme in ("https", "http") and bool(parsed.hostname)
+            and parsed.username is None and parsed.password is None and not any(ch.isspace() for ch in value))
 
 
 def _score(scorer, supplied, name):
@@ -42,11 +43,16 @@ def _evidence_at(evidence, decision_time):
     if not isinstance(evidence, list):
         raise TypeError("evidence must be a list")
     audit, strong_count, kill_count = [], 0, 0
+    seen_ids = set()
     for index, item in enumerate(evidence):
         if not isinstance(item, dict):
             raise TypeError(f"evidence[{index}] must be an object")
         if "id" in item and (not isinstance(item["id"], str) or not item["id"].strip()):
             raise ValueError(f"evidence[{index}].id must be a nonempty string")
+        identity = item.get("id", f"evidence-{index + 1}")
+        if identity in seen_ids:
+            raise ValueError("Duplicate evidence id; version each distinct evidence record")
+        seen_ids.add(identity)
         optional_bool(f"evidence[{index}].kill_switch", item.get("kill_switch"))
         reasons = []
         published = item.get("published_at")
@@ -120,6 +126,9 @@ def build_card(dataset, context: dict, as_of=None) -> dict:
     validate_dataset(dataset)
     if not isinstance(context, dict):
         raise TypeError("context must be an object")
+    allowed = {"alpha_scores", "pricing_scores", "risk_checks", "stop_loss_price", "target_price", "evidence"}
+    if set(context) - allowed:
+        raise ValueError(f"Unknown context fields: {sorted(set(context) - allowed)}")
     context = to_jsonable(context)  # copy and reject NaN/inf before hashing
     if not dataset.bars:
         raise ValueError("Dataset contains no bars")
@@ -164,6 +173,8 @@ def build_card(dataset, context: dict, as_of=None) -> dict:
         checks["price_location"] = False
     if metrics.get("atr_percent") is not None and metrics["atr_percent"] > 5:
         checks["volatility"] = False
+    if visible.market == "US" and visible.currency == "USD" and visible.bars[-1].volume * entry < 10_000_000:
+        checks["liquidity"] = False
     if evidence["strong_support_count"] == 0:
         checks["evidence_quality"] = False
     risk = RiskGovernorScorer().check(**checks)
@@ -176,6 +187,14 @@ def build_card(dataset, context: dict, as_of=None) -> dict:
         risk.suggested_action = "Thesis vetoed; do not enter execution preparation"
     trade = _trade_score(structure, stop_defined, rr)
     blockers = []
+    profile_supported = (visible.market == "US" and visible.currency == "USD"
+                         and visible.asset_type in {"US_STOCK", "ETF"} and visible.adjustment == "unadjusted")
+    if not profile_supported:
+        blockers.append("readiness_profile_unsupported")
+    if not visible.is_mock and visible.exchange not in {"NYSE", "NASDAQ", "NYSE_ARCA", "CBOE"}:
+        blockers.append("exchange_not_declared_or_supported")
+    if (decision_time - visible.bars[-1].timestamp).total_seconds() > 4 * 86400:
+        blockers.append("market_data_stale_over_4_days")
     if alpha is None:
         blockers.append("alpha_scores_missing")
     if pricing is None:
@@ -218,6 +237,8 @@ def build_card(dataset, context: dict, as_of=None) -> dict:
         candidate = BSHLAlphaScorer()._determine_final_status(alpha, pricing, trade, risk)
     if candidate == "Trade Ready" and blockers:
         candidate = "Watchlist"
+    if not profile_supported and candidate != "Veto":
+        candidate = "Research Only"
     simulation_status = candidate if visible.is_mock else None
     final_status = "Research Only" if visible.is_mock else candidate
     if visible.is_mock:
@@ -226,6 +247,7 @@ def build_card(dataset, context: dict, as_of=None) -> dict:
               "timeframe": visible.timeframe, "currency": visible.currency,
               "timezone": visible.timezone, "adjustment": visible.adjustment,
               "asset_type": visible.asset_type,
+              "exchange": visible.exchange,
               "session_dates": [day.isoformat() for day in visible.session_dates],
               "retrieved_at": to_jsonable(visible.retrieved_at),
               "verification": "user_supplied_not_independently_verified"}

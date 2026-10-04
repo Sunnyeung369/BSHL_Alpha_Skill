@@ -1,6 +1,5 @@
 """BSHL command line. No credentials or automatic orders."""
 import argparse
-from datetime import datetime
 import json
 from pathlib import Path
 import sys
@@ -118,7 +117,7 @@ def main(argv=None):
                                json.loads(Path(args.account).read_text(encoding="utf-8")))
             print(dumps({"report": str(write_json(result, args.output))}))
             return 0
-        from .market import load_dataset
+        from .market import load_dataset, parse_timestamp
         from .engine import build_card
         if args.command == "backtest":
             from datetime import date
@@ -151,7 +150,7 @@ def main(argv=None):
         else:
             dataset = load_dataset(args.csv, args.metadata)
             context = json.loads(Path(args.context).read_text(encoding="utf-8"))
-            as_of = datetime.fromisoformat(args.as_of) if args.as_of else None
+            as_of = parse_timestamp(args.as_of) if args.as_of else None
         card = build_card(dataset, context, as_of=as_of)
         path = write_card(card, args.output)
         print(dumps({"card": str(path), "state": card["final_status"], "is_mock": card["is_mock"], "analysis_id": card["analysis_id"]}))

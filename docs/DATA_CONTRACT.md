@@ -7,6 +7,8 @@ CSV headers, in order: `timestamp,open,high,low,close,volume,available_at,is_clo
 
 Metadata fields: `symbol`, `market`, `timeframe` (`1d`), `currency`, IANA `timezone`, `adjustment` (`unadjusted`, `split_adjusted`, `total_return`), HTTP(S) `source_url`, `data_mode` (`csv`/`mock`), `is_mock`, `asset_type`, `retrieved_at`. Optional `session_dates` is the sorted provider-declared exchange calendar. For simulation, supply unadjusted US/USD stock or ETF data and an explicit `session_open` for every bar, or metadata `session_open_times` keyed by declared date. A weekday list is not a verified exchange calendar.
 
+Also declare `exchange`. For backward-compatible CSV import it defaults to UNKNOWN, which cannot establish non-mock readiness. This release accepts declared NYSE, NASDAQ, NYSE_ARCA or CBOE for the US stock/ETF readiness profile. Other profiles remain research-only; imported exchange declarations are not authenticated. The bundled exchange is explicitly SYNTHETIC-US.
+
 Use the bundled [metadata](../bshl/assets/breakout.metadata.json) and [context](../bshl/assets/demo.context.json) for field shape only. They are fictional fixtures.
 
 ## Context and evidence
@@ -14,6 +16,8 @@ Use the bundled [metadata](../bshl/assets/breakout.metadata.json) and [context](
 Alpha and pricing scores are human-supplied research judgments, not inferred financial facts. Each supplied score object must contain exactly its scorer's public keys. A missing layer stays unknown. A historical context must represent information known at that decision time; the engine cannot authenticate a human's score history.
 
 `risk_checks` accepts the ten named boolean-or-null gates. Missing gates cannot Pass. Supply a chosen `stop_loss_price` and `target_price`; suggested structural stops are not adopted automatically. Ready requires reward/risk >= 2, trade points >= 85 and all gates. Measured overheat, ATR > 5% or stop distance > 10% tighten manual checks. These are experimental limits, not calibrated risk estimates.
+
+Daily US/USD dollar volume below 10 million tightens the liquidity gate. A last close older than four calendar days blocks readiness; explicitly choose the historical `as_of` for dated research. Holiday closures longer than that limit remain blocked until reviewed through a new snapshot. Context accepts only the documented six fields; unknown keys and duplicate evidence IDs fail.
 
 Evidence needs a claim, HTTP(S) source URL, `published_at`, `available_at`, `source_type`, `evidence_strength`, and `supports_or_refutes`. Strong supporting sources are filing, transcript, company_release or industry_report. An available `kill_switch: true` vetoes the thesis. Optional `expires_at` removes stale support. Future and expired evidence stays in the audit record but cannot support or veto the decision. Source authenticity is user-supplied and not independently verified.
 

@@ -1,0 +1,25 @@
+name: Data adapter or market profile
+description: Propose a provider with explicit data semantics and frozen tests.
+title: "[Adapter] "
+labels: [enhancement]
+body:
+  - type: input
+    id: provider
+    attributes:
+      label: Official API/documentation and license
+    validations:
+      required: true
+  - type: textarea
+    id: semantics
+    attributes:
+      label: Market, exchange, timezone, adjustment and availability
+      description: Specify symbol mapping, session calendar, close/open times, stale-data rules and supported scope.
+    validations:
+      required: true
+  - type: textarea
+    id: failures
+    attributes:
+      label: Frozen success and rejection fixtures
+      description: Cover timeout, invalid ticker, auth/rate limit, partial/stale bars and explicit mock opt-in. Never include credentials.
+    validations:
+      required: true

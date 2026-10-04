@@ -1,6 +1,7 @@
 """Portable text cards; preserve data labels in every export."""
 from pathlib import Path
 from .serialization import dumps
+from .files import write_text
 
 
 def markdown(card):
@@ -26,6 +27,6 @@ def write_card(card, output):
         if path.exists() and path.read_text(encoding="utf-8") != content:
             raise FileExistsError(f"Choose a new output folder; existing card differs: {path}")
     for name, content in contents.items():
-        (folder / name).write_text(content, encoding="utf-8")
+        write_text(content, folder / name)
     return folder / "card.md"
 

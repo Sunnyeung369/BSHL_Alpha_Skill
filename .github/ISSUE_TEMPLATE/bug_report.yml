@@ -1,0 +1,29 @@
+name: Reproducible failure / 可复现问题
+description: Report incorrect mechanics, a blocked install or a wrong risk state.
+title: "[Failure] "
+labels: [bug]
+body:
+  - type: input
+    id: revision
+    attributes:
+      label: Commit/version and OS/Python
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Exact command and minimal fixture
+      description: Include decision time, data mode and available_at. Remove secrets and private records.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected state or blocker, and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Provenance and mechanical evidence
+      description: A missed rally or a Star count does not prove a gate is wrong. Explain the invariant that failed.

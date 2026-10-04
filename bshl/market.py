@@ -71,6 +71,7 @@ class Dataset:
     is_mock: bool = False
     bars: tuple[Bar, ...] = ()
     asset_type: str = "US_STOCK"
+    exchange: str = "UNKNOWN"
     retrieved_at: datetime | None = None
     session_dates: tuple[date, ...] = ()
 
@@ -87,6 +88,8 @@ def validate_dataset(dataset: Dataset) -> None:
     if not isinstance(dataset, Dataset):
         raise ValueError("dataset must be a Dataset")
     validate_symbol(dataset.symbol)
+    if not isinstance(dataset.exchange, str) or not dataset.exchange.strip():
+        raise ValueError("exchange must be a nonempty declared name or UNKNOWN")
     if dataset.market not in {"US", "HK", "CN", "CRYPTO"}:
         raise ValueError("unsupported market")
     if dataset.timeframe != "1d":
@@ -103,7 +106,8 @@ def validate_dataset(dataset: Dataset) -> None:
         raise ValueError("currency must be a three-letter uppercase code")
     zone = timezone_from_name(dataset.timezone)
     parsed_url = urlparse(dataset.source_url)
-    if parsed_url.scheme not in {"https", "http"} or not parsed_url.netloc or any(ch.isspace() for ch in dataset.source_url):
+    if (parsed_url.scheme not in {"https", "http"} or not parsed_url.hostname
+            or parsed_url.username is not None or parsed_url.password is not None or any(ch.isspace() for ch in dataset.source_url)):
         raise ValueError("source_url must be an HTTP(S) provenance URL")
     if dataset.retrieved_at is None:
         raise ValueError("retrieved_at is required")
@@ -167,7 +171,7 @@ def load_dataset(csv_path, metadata_path) -> Dataset:
                 "data_mode", "is_mock", "asset_type", "retrieved_at"}
     if required - metadata.keys():
         raise ValueError(f"missing metadata fields: {', '.join(sorted(required - metadata.keys()))}")
-    allowed = required | {"session_dates", "session_open_times", "schema_version"}
+    allowed = required | {"exchange", "session_dates", "session_open_times", "schema_version"}
     if metadata.keys() - allowed:
         raise ValueError(f"unknown metadata fields: {', '.join(sorted(metadata.keys() - allowed))}")
     if metadata["data_mode"] not in {"csv", "mock"}:

@@ -43,7 +43,7 @@ for scenario in ("breakout", "overheated"):
     meta = {"symbol": "DEMO", "market": "US", "timeframe": "1d", "currency": "USD",
         "timezone": "America/New_York", "adjustment": "unadjusted",
         "source_url": "https://example.invalid/bshl/synthetic-candles", "data_mode": "mock",
-        "is_mock": True, "asset_type": "ETF", "retrieved_at": rows[-1]["available_at"],
+        "is_mock": True, "asset_type": "ETF", "exchange": "SYNTHETIC-US", "retrieved_at": rows[-1]["available_at"],
         "session_dates": [day.isoformat() for day in sessions]}
     (assets / (scenario + ".metadata.json")).write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 context = {
