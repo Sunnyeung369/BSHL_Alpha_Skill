@@ -1,3 +1,5 @@
+> 当前边界（v0.9）：本页为人工研究框架/提示模板，不代表自动联网或已实现的行情接口。涉及执行状态和数值阈值时，以[CSV与门控合同](../docs/DATA_CONTRACT.md)、[模拟边界](../docs/BACKTEST.md)及[工作区实现](../docs/WORKSPACE.md)为准。页内旧日期、公司和数字示例未逐条核实，仅作历史示意；不能作为当前交易依据。
+
 # Post Trade Review
 ## 复盘写回工作流
 
@@ -405,12 +407,12 @@
 
 **原规则**:
 ```
-Confirmed Breakout + Risk Governor Pass → Trade Ready
+Confirmed Breakout + Risk Governor Pass + 足够证据/历史 + 明确用户止损/目标 + RR>=2 + Trade分>=85 + 非模拟数据 → 按代码重新评估
 ```
 
 **新规则**:
 ```
-Confirmed Breakout + Risk Governor Pass + 宏观环境稳定 → Trade Ready
+宏观环境稳定仅为研究条件，不能替代收盘、止损、证据、完整风控及当前代码门控
 
 Confirmed Breakout + Risk Governor Pass + 宏观环境不稳定 → Wait Only
 ```

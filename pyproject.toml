@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bshl-alpha"
-version = "0.8.0"
+version = "0.9.0"
 description = "Evidence-first market research and explainable trade readiness"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -12,6 +12,7 @@ dependencies = ["tzdata>=2024.1; sys_platform == 'win32'"]
 
 [project.optional-dependencies]
 dev = ["jsonschema>=4.23,<5"]
+visual = ["Pillow>=10,<13"]
 
 [project.scripts]
 bshl = "bshl.cli:main"

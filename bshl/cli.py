@@ -71,12 +71,20 @@ def build_parser():
     size.add_argument("--card", required=True)
     size.add_argument("--account", required=True)
     size.add_argument("--output", default="outputs/sizing.json")
+    share = sub.add_parser("share", help="Export an SVG with provenance, data labels and invalidation")
+    share.add_argument("--card", required=True)
+    share.add_argument("--output", default="outputs/research-card.svg")
     return parser
 
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
     try:
+        if args.command == "share":
+            from .share import write_share
+            path = write_share(json.loads(Path(args.card).read_text(encoding="utf-8")), args.output)
+            print(dumps({"share_card": str(path)}))
+            return 0
         if args.command == "journal":
             from .workspace import Workspace
             from .files import write_json

@@ -1,0 +1,520 @@
+# BSHL research card — DEMO
+
+**State:** Research Only
+**Data:** MOCK / SYNTHETIC
+**As of:** 2025-05-23T20:00:00+00:00
+**Analysis ID:** a44ae0c0291ad25f2866f7218fab4d87053b845975948cbc0ee993fc6b4ccc3b
+
+## Reasons / blockers
+
+- mock_data_research_only
+
+## Reproducible details
+
+```json
+{
+  "schema_version": "1.0",
+  "rule_version": "readiness-0.6.0",
+  "analysis_id": "a44ae0c0291ad25f2866f7218fab4d87053b845975948cbc0ee993fc6b4ccc3b",
+  "symbol": "DEMO",
+  "as_of": "2025-05-23T20:00:00+00:00",
+  "data_mode": "mock",
+  "is_mock": true,
+  "source": {
+    "url": "https://example.invalid/bshl/synthetic-candles",
+    "market": "US",
+    "timeframe": "1d",
+    "currency": "USD",
+    "timezone": "America/New_York",
+    "adjustment": "unadjusted",
+    "asset_type": "ETF",
+    "session_dates": [
+      "2025-01-06",
+      "2025-01-07",
+      "2025-01-08",
+      "2025-01-09",
+      "2025-01-10",
+      "2025-01-13",
+      "2025-01-14",
+      "2025-01-15",
+      "2025-01-16",
+      "2025-01-17",
+      "2025-01-20",
+      "2025-01-21",
+      "2025-01-22",
+      "2025-01-23",
+      "2025-01-24",
+      "2025-01-27",
+      "2025-01-28",
+      "2025-01-29",
+      "2025-01-30",
+      "2025-01-31",
+      "2025-02-03",
+      "2025-02-04",
+      "2025-02-05",
+      "2025-02-06",
+      "2025-02-07",
+      "2025-02-10",
+      "2025-02-11",
+      "2025-02-12",
+      "2025-02-13",
+      "2025-02-14",
+      "2025-02-17",
+      "2025-02-18",
+      "2025-02-19",
+      "2025-02-20",
+      "2025-02-21",
+      "2025-02-24",
+      "2025-02-25",
+      "2025-02-26",
+      "2025-02-27",
+      "2025-02-28",
+      "2025-03-03",
+      "2025-03-04",
+      "2025-03-05",
+      "2025-03-06",
+      "2025-03-07",
+      "2025-03-10",
+      "2025-03-11",
+      "2025-03-12",
+      "2025-03-13",
+      "2025-03-14",
+      "2025-03-17",
+      "2025-03-18",
+      "2025-03-19",
+      "2025-03-20",
+      "2025-03-21",
+      "2025-03-24",
+      "2025-03-25",
+      "2025-03-26",
+      "2025-03-27",
+      "2025-03-28",
+      "2025-03-31",
+      "2025-04-01",
+      "2025-04-02",
+      "2025-04-03",
+      "2025-04-04",
+      "2025-04-07",
+      "2025-04-08",
+      "2025-04-09",
+      "2025-04-10",
+      "2025-04-11",
+      "2025-04-14",
+      "2025-04-15",
+      "2025-04-16",
+      "2025-04-17",
+      "2025-04-18",
+      "2025-04-21",
+      "2025-04-22",
+      "2025-04-23",
+      "2025-04-24",
+      "2025-04-25",
+      "2025-04-28",
+      "2025-04-29",
+      "2025-04-30",
+      "2025-05-01",
+      "2025-05-02",
+      "2025-05-05",
+      "2025-05-06",
+      "2025-05-07",
+      "2025-05-08",
+      "2025-05-09",
+      "2025-05-12",
+      "2025-05-13",
+      "2025-05-14",
+      "2025-05-15",
+      "2025-05-16",
+      "2025-05-19",
+      "2025-05-20",
+      "2025-05-21",
+      "2025-05-22",
+      "2025-05-23"
+    ],
+    "retrieved_at": "2025-05-23T20:00:00+00:00",
+    "verification": "user_supplied_not_independently_verified"
+  },
+  "technical_structure": {
+    "state": "Confirmed Breakout",
+    "closed_bar_confirmed": true,
+    "suggested_stop": 119.44152466289738,
+    "support": 120.0,
+    "resistance": 125.0,
+    "reasons": [
+      "Closed resistance breakout with volume and completed parent trend confirmation."
+    ],
+    "metrics": {
+      "ma20": 122.09094999999999,
+      "ma50": 118.52252399999999,
+      "atr": 2.233901348410475,
+      "atr_percent": 1.7729375781035517,
+      "price": 126.0,
+      "volume_ratio": 3.0,
+      "distance_from_ma20_atr": 1.749875840659427,
+      "parent_cycle": "UP",
+      "parent_week_confirmed": true,
+      "parent_weeks": [
+        {
+          "week": "2025-01-06",
+          "timestamp": "2025-01-10T21:00:00+00:00",
+          "close": 101.2524,
+          "sessions": 5
+        },
+        {
+          "week": "2025-01-13",
+          "timestamp": "2025-01-17T21:00:00+00:00",
+          "close": 102.4834,
+          "sessions": 5
+        },
+        {
+          "week": "2025-01-20",
+          "timestamp": "2025-01-24T21:00:00+00:00",
+          "close": 103.3948,
+          "sessions": 5
+        },
+        {
+          "week": "2025-01-27",
+          "timestamp": "2025-01-31T21:00:00+00:00",
+          "close": 104.4502,
+          "sessions": 5
+        },
+        {
+          "week": "2025-02-03",
+          "timestamp": "2025-02-07T21:00:00+00:00",
+          "close": 105.9162,
+          "sessions": 5
+        },
+        {
+          "week": "2025-02-10",
+          "timestamp": "2025-02-14T21:00:00+00:00",
+          "close": 107.4969,
+          "sessions": 5
+        },
+        {
+          "week": "2025-02-17",
+          "timestamp": "2025-02-21T21:00:00+00:00",
+          "close": 108.7395,
+          "sessions": 5
+        },
+        {
+          "week": "2025-02-24",
+          "timestamp": "2025-02-28T21:00:00+00:00",
+          "close": 109.6541,
+          "sessions": 5
+        },
+        {
+          "week": "2025-03-03",
+          "timestamp": "2025-03-07T21:00:00+00:00",
+          "close": 110.7,
+          "sessions": 5
+        },
+        {
+          "week": "2025-03-10",
+          "timestamp": "2025-03-14T20:00:00+00:00",
+          "close": 112.1567,
+          "sessions": 5
+        },
+        {
+          "week": "2025-03-17",
+          "timestamp": "2025-03-21T20:00:00+00:00",
+          "close": 113.7411,
+          "sessions": 5
+        },
+        {
+          "week": "2025-03-24",
+          "timestamp": "2025-03-28T20:00:00+00:00",
+          "close": 114.9954,
+          "sessions": 5
+        },
+        {
+          "week": "2025-03-31",
+          "timestamp": "2025-04-04T20:00:00+00:00",
+          "close": 115.9136,
+          "sessions": 5
+        },
+        {
+          "week": "2025-04-07",
+          "timestamp": "2025-04-11T20:00:00+00:00",
+          "close": 116.9501,
+          "sessions": 5
+        },
+        {
+          "week": "2025-04-14",
+          "timestamp": "2025-04-18T20:00:00+00:00",
+          "close": 118.3973,
+          "sessions": 5
+        },
+        {
+          "week": "2025-04-21",
+          "timestamp": "2025-04-25T20:00:00+00:00",
+          "close": 119.9851,
+          "sessions": 5
+        },
+        {
+          "week": "2025-04-28",
+          "timestamp": "2025-05-02T20:00:00+00:00",
+          "close": 121.251,
+          "sessions": 5
+        },
+        {
+          "week": "2025-05-05",
+          "timestamp": "2025-05-09T20:00:00+00:00",
+          "close": 121.0,
+          "sessions": 5
+        },
+        {
+          "week": "2025-05-12",
+          "timestamp": "2025-05-16T20:00:00+00:00",
+          "close": 122.0,
+          "sessions": 5
+        }
+      ],
+      "pivot_high_confirmed": true,
+      "pivot_low_confirmed": true,
+      "breakout_confirmed": true,
+      "pullback_confirmed": false,
+      "overheated": false,
+      "breakdown": false,
+      "history_sufficient": true,
+      "parameters_experimental": true,
+      "parameters": {
+        "atr_period": 14,
+        "ma_fast": 20,
+        "ma_slow": 50,
+        "pivot_left": 2,
+        "pivot_right": 2,
+        "breakout_buffer_percent": 0.1,
+        "breakout_volume_ratio": 1.3,
+        "pullback_atr_tolerance": 0.5,
+        "overheat_atr": 3.0,
+        "stop_buffer_atr": 0.25,
+        "breakout_lookback": 5,
+        "minimum_parent_weeks": 2
+      }
+    }
+  },
+  "alpha_thesis": {
+    "total": 100,
+    "grade": "A",
+    "breakdown": {
+      "demand_inflection": 15,
+      "supply_chain_bottleneck": 15,
+      "company_benefit_certainty": 15,
+      "evidence_quality": 15,
+      "catalyst_timing": 10,
+      "valuation_mismatch": 10,
+      "competition": 10,
+      "contradiction_clarity": 10
+    },
+    "reasoning": [
+      "需求拐点明确 - 需求增长信号强",
+      "供应链卡点明确 - 供给受限",
+      "公司直接受益 - 受益路径清晰",
+      "证据质量高 - 多条强证据",
+      "催化剂临近 - 时间窗口明确",
+      "估值错配明显 - 上涨空间大",
+      "竞争格局好 - 公司地位稳固",
+      "反证清晰 - 风险点明确"
+    ]
+  },
+  "market_pricing": {
+    "total": 100,
+    "grade": "A",
+    "breakdown": {
+      "sector_trend": 15,
+      "relative_strength": 15,
+      "capital_inflow": 15,
+      "crowding": 15,
+      "valuation_digestion": 15,
+      "risk_appetite": 15,
+      "catalyst_priced": 10
+    },
+    "reasoning": [
+      "板块强势 - 跑赢大盘",
+      "相对强度高 - 继续强势",
+      "资金持续流入 - 买盘强",
+      "拥挤度低 - 有上升空间",
+      "估值充分消化 - 估值合理",
+      "市场 Risk On - 风险偏好高",
+      "催化剂未定价 - 有上涨空间"
+    ],
+    "implication": "市场定价合理，拥挤度低，赔率高 - 优先配置"
+  },
+  "trade_readiness": {
+    "total": 90,
+    "status": "Trade Ready",
+    "breakdown": {
+      "parent_cycle_direction": 15,
+      "child_cycle_structure": 15,
+      "breakout_confirmation": 15,
+      "pullback_quality": 0,
+      "volume_confirmation": 10,
+      "stop_loss_clarity": 15,
+      "reward_risk": 15,
+      "volatility_controlled": 5
+    },
+    "reasoning": [
+      "母周期明确上涨 - 顺势交易",
+      "子周期位置理想 - 入场时机好",
+      "突破已确认 - 可跟随",
+      "无回踩或回踩破位 - 不交易",
+      "成交量确认 - 资金支持强",
+      "止损位清晰 - 风险可控",
+      "盈亏比优秀 - 风险收益比佳",
+      "波动可控 - 适合交易"
+    ],
+    "action": "具备交易准备 - 可进入执行准备，设定具体入场计划",
+    "closed_bar_confirmed": true,
+    "stop_loss_defined": true
+  },
+  "risk_governor": {
+    "decision": "Pass",
+    "reasoning": [],
+    "suggested_action": "全部检查通过，可交由用户评估执行计划",
+    "risk_warnings": [],
+    "triggered_conditions": [],
+    "checks": [
+      {
+        "name": "liquidity",
+        "status": true,
+        "detail": "检查通过",
+        "severity": "low"
+      },
+      {
+        "name": "volatility",
+        "status": true,
+        "detail": "检查通过",
+        "severity": "low"
+      },
+      {
+        "name": "evidence_quality",
+        "status": true,
+        "detail": "检查通过",
+        "severity": "low"
+      },
+      {
+        "name": "social_crowding",
+        "status": true,
+        "detail": "检查通过",
+        "severity": "low"
+      },
+      {
+        "name": "earnings_risk",
+        "status": true,
+        "detail": "检查通过",
+        "severity": "low"
+      },
+      {
+        "name": "regulatory_uncertainty",
+        "status": true,
+        "detail": "检查通过",
+        "severity": "low"
+      },
+      {
+        "name": "price_location",
+        "status": true,
+        "detail": "检查通过",
+        "severity": "low"
+      },
+      {
+        "name": "stop_loss_distance",
+        "status": true,
+        "detail": "检查通过",
+        "severity": "low"
+      },
+      {
+        "name": "position_exposure",
+        "status": true,
+        "detail": "检查通过",
+        "severity": "low"
+      },
+      {
+        "name": "correlation",
+        "status": true,
+        "detail": "检查通过",
+        "severity": "low"
+      }
+    ],
+    "missing_checks": []
+  },
+  "evidence": {
+    "audit": [
+      {
+        "index": 0,
+        "id": "SYNTHETIC-001",
+        "available": true,
+        "eligible_strong_support": true,
+        "kill_switch_active": false,
+        "reasons": []
+      }
+    ],
+    "strong_support_count": 1,
+    "active_kill_switch_count": 0,
+    "source_verification": "user_supplied_not_independently_verified"
+  },
+  "trade_plan": {
+    "entry_price": 126.0,
+    "stop_loss_price": 121.0,
+    "target_price": 145.0,
+    "stop_loss_defined": true,
+    "target_defined": true,
+    "reward_risk_ratio": 3.8,
+    "stop_source": "user"
+  },
+  "final_status": "Research Only",
+  "simulation_status": "Trade Ready",
+  "blockers": [
+    "mock_data_research_only"
+  ],
+  "context": {
+    "alpha_scores": {
+      "demand_inflection": 15,
+      "supply_chain_bottleneck": 15,
+      "company_benefit_certainty": 15,
+      "evidence_quality": 15,
+      "catalyst_timing": 10,
+      "valuation_mismatch": 10,
+      "competition": 10,
+      "contradiction_clarity": 10
+    },
+    "pricing_scores": {
+      "sector_trend": 15,
+      "relative_strength": 15,
+      "capital_inflow": 15,
+      "crowding": 15,
+      "valuation_digestion": 15,
+      "risk_appetite": 15,
+      "catalyst_priced": 10
+    },
+    "risk_checks": {
+      "liquidity": true,
+      "volatility": true,
+      "evidence_quality": true,
+      "social_crowding": true,
+      "earnings_risk": true,
+      "regulatory_uncertainty": true,
+      "price_location": true,
+      "stop_loss_distance": true,
+      "position_exposure": true,
+      "correlation": true
+    },
+    "stop_loss_price": 121.0,
+    "target_price": 145.0,
+    "evidence": [
+      {
+        "id": "SYNTHETIC-001",
+        "claim": "Fictional fixture for exercising the pipeline, not an investment thesis",
+        "source_type": "company_release",
+        "source_url": "https://example.invalid/bshl/fixture",
+        "published_at": "2025-01-01T00:00:00+00:00",
+        "available_at": "2025-01-01T00:00:00+00:00",
+        "evidence_strength": "strong",
+        "supports_or_refutes": "supports",
+        "kill_switch": false
+      }
+    ]
+  },
+  "score_interpretation": "Versioned heuristic points; not calibrated return probabilities"
+}
+```
+
+Research preparation only. Synthetic results do not establish a trading edge.

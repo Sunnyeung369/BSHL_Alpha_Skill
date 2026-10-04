@@ -1,7 +1,9 @@
 # About BSHL
 
-BSHL helps a researcher preserve evidence, contradictions, price-structure conditions and risk decisions in a reviewable workflow. Intended users are people who want to examine why a judgment was made and what would invalidate it.
+BSHL — Evidence-first Research & Trade Readiness / 证据驱动投研与交易准备。
 
-研究价值：将来源、时点、反证和风险条件写清楚；避免把未知数据当成通过；保留原始判断以便复盘。
+The project helps researchers connect source evidence, deterministic daily structure, risk blockers and outcome review. Its value is a judgment you can inspect and preserve. It does not claim a validated trading edge.
 
-The legacy v0.5 included incomplete adapters and broken execution paths. See the [current roadmap](VERSION_ROADMAP.md), [Quickstart](QUICKSTART.md) and [historical design](docs/archive/v0.5-design.md). No validated return, win-rate or user-endorsement claim is made.
+The executable path is CSV → research card → local journal → reassessment/review → export/recovery. A separate US cash simulator evaluates price-rule mechanics with costs and fixed splits. The [capability table](README.md), [data contract](docs/DATA_CONTRACT.md) and [roadmap](VERSION_ROADMAP.md) define the supported scope. Historical prose templates are manual research aids; they do not override code gates or imply live API support.
+
+Sources and research scores are user-supplied. No autonomous orders, broker link or background monitor is included. Other markets, derivatives and authenticated live adapters need independent implementation and validation. Feedback and adoption figures are reported only when observed; no endorsements are invented.
