@@ -15,4 +15,6 @@ This prerelease turns a broken research prototype into an executable offline wor
 
 Regression, temporal, schema, CLI, journal-recovery and fixture tests run in an isolated environment. GitHub CI uses Windows/Linux/macOS and Python 3.10/3.13. The public workflow result and tag commit are the publishing evidence.
 
+Local suite: 130 tests passed. All six implementation CI environments passed after fixing a version-dependent MA summation difference. Public JSON/Markdown/SVG examples are strictly recomputed, and the built wheel was installed and exercised in a new environment. Topics and two focused contribution issues are configured. Social Preview PNG is supplied; its GitHub Settings upload remains unfinished due to browser/control failure.
+
 No authenticated live provider, broker, autonomous order execution, background monitoring, corporate-action handling or validated profitability is included. Context scores and source authenticity are user-supplied. The price simulator does not recreate historical Alpha research. Synthetic demo results are engineering checks, not investment results. Real usage feedback and live Agent loading remain separate acceptance work.

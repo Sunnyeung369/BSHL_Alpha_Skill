@@ -4,7 +4,7 @@
 
 Added three reproducible synthetic cards, bilingual landing, provenance-preserving SVG sharing and a 1280×640 repository cover. Added adapter/failure issue forms, CSV adapter boundary, maintained fixture/schema checks, document/image link checks and clean-wheel installation in the six CI environments. Final hardening blocks unknown exchanges, unsupported readiness profiles, stale bars and measured illiquidity; evidence IDs are unique and artifact publishing is atomic/exclusive.
 
-Local acceptance: 130 regression/domain/schema/CLI/journal/adapter/atomic-output tests. Public fixtures recompute exactly. CI exposed a Python 3.10 versus 3.12+ summation difference; deterministic averages now use `math.fsum` and full outputs remain strictly compared. Tests verify mechanics, not profitability. GitHub publication, latest CI and repository cover setting must be verified separately; see the roadmap and release notes.
+Local acceptance: 130 regression/domain/schema/CLI/journal/adapter/atomic-output tests. Public fixtures recompute exactly. CI exposed a Python 3.10 versus 3.12+ summation difference; deterministic averages now use `math.fsum` and full outputs remain strictly compared. Six implementation CI environments passed. Tests verify mechanics, not profitability. See the [release](https://github.com/Sunnyeung369/BSHL_Alpha_Skill/releases/tag/v0.9.0) and [roadmap](VERSION_ROADMAP.md) for publishing evidence; the cover asset is delivered but its repository Settings upload remains unverified.
 
 ## 0.8.0 — Decision journal
 
