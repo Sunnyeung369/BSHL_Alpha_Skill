@@ -10,6 +10,20 @@ ASSETS = Path(__file__).resolve().parents[1] / "bshl/assets"
 
 
 class BacktestCliTests(unittest.TestCase):
+    def test_candidate_comparison_keeps_identical_split_without_deploying(self):
+        with tempfile.TemporaryDirectory() as folder:
+            config = Path(folder) / "candidate.json"
+            config.write_text('{"lookback": 10}')
+            output = Path(folder) / "comparison.json"
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["backtest", "--csv", str(ASSETS / "breakout.csv"),
+                    "--metadata", str(ASSETS / "breakout.metadata.json"),
+                    "--train-end", "2025-04-30", "--test-start", "2025-05-01",
+                    "--compare-config", str(config), "--output", str(output)]), 0)
+            report = json.loads(output.read_text())
+            self.assertEqual(report["baseline"]["split_protocol"], report["candidate"]["split_protocol"])
+            self.assertFalse(report["automatically_applied"])
+
     def test_report_round_trip_and_idempotence(self):
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder) / "simulation.json"

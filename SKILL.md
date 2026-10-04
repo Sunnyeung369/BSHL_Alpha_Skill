@@ -20,4 +20,5 @@ description: Organize evidence-backed market research, check price structure and
 - Price structure: [readiness workflow](workflows/trade_readiness_check.md), [structure rules](references/technical_structure_rules.md).
 - Risk: [risk workflow](workflows/risk_governor_check.md), [scope](constitution/scope_and_safety.md).
 - Review: [post-trade workflow](workflows/post_trade_review.md), [no autonomous trading](constitution/no_autonomous_trading.md).
+- Deterministic execution: [CSV contract](docs/DATA_CONTRACT.md), [event simulation](docs/BACKTEST.md), [local journal and recovery](docs/WORKSPACE.md). Run these documented CLI commands to generate cards and persist decisions; do not treat a prose prompt as an implemented API connection.
 - Setup and tested capabilities: [Quickstart](QUICKSTART.md), [roadmap](VERSION_ROADMAP.md).
