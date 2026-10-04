@@ -117,3 +117,29 @@ class EngineTests(unittest.TestCase):
         changed = copy.deepcopy(ready)
         changed["risk_governor"]["checks"] = [changed["risk_governor"]["checks"][0]] * 10
         self.assertTrue(list(validator.iter_errors(changed)))
+
+    def test_pullback_rebound_produces_pullback_entry_zone(self):
+        dataset, context = fixture("pullback")
+        card = build_card(dataset, context)
+        self.assertEqual(card["technical_structure"]["state"], "Pullback Entry Zone")
+        self.assertTrue(card["technical_structure"]["metrics"]["pullback_confirmed"])
+        self.assertEqual(card["simulation_status"], "Trade Ready")
+        self.assertEqual(card["final_status"], "Research Only")
+        self.assertIn("mock_data_research_only", card["blockers"])
+        # Deterministic: recomputing produces the same analysis_id.
+        self.assertEqual(card, build_card(dataset, context))
+
+    def test_breakdown_cannot_become_trade_ready(self):
+        dataset, context = fixture("breakdown")
+        card = build_card(dataset, context)
+        self.assertEqual(card["technical_structure"]["state"], "Breakdown")
+        self.assertTrue(card["technical_structure"]["metrics"]["breakdown"])
+        self.assertEqual(card["final_status"], "Research Only")
+        self.assertNotEqual(card["simulation_status"], "Trade Ready")
+        self.assertIn("structure_not_confirmed", card["blockers"])
+        self.assertIn("mock_data_research_only", card["blockers"])
+        # Even with non-mock data, Breakdown state blocks Trade Ready.
+        live = replace(dataset, is_mock=False, data_mode="csv", exchange="NYSE")
+        live_card = build_card(live, context)
+        self.assertNotEqual(live_card["final_status"], "Trade Ready")
+        self.assertIn("structure_not_confirmed", live_card["blockers"])

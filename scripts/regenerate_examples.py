@@ -1,4 +1,4 @@
-"""Explicitly refresh the three repository fixtures after reviewed rule changes."""
+"""Explicitly refresh the five repository fixtures after reviewed rule changes."""
 from pathlib import Path
 import tempfile
 from run_demo import run
@@ -9,7 +9,7 @@ if not destination.resolve().is_relative_to(root.resolve()):
     raise RuntimeError("Examples must stay inside this repository")
 with tempfile.TemporaryDirectory(prefix="bshl-examples-") as temporary:
     run(temporary)
-    for scenario in ("breakout", "no-stop", "overheated"):
+    for scenario in ("breakout", "no-stop", "overheated", "pullback-rebound", "breakdown"):
         folder = destination / scenario
         if not folder.resolve().is_relative_to(destination.resolve()):
             raise RuntimeError("Fixture folder resolves outside examples")
