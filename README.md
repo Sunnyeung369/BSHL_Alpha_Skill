@@ -1,7 +1,7 @@
 # BSHL — Evidence-first Research & Trade Readiness
 
 [![Verification](https://github.com/Sunnyeung369/BSHL_Alpha_Skill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Sunnyeung369/BSHL_Alpha_Skill/actions/workflows/ci.yml)
-[English](#english) · [中文](#中文) · [Quickstart](QUICKSTART.md) · [Release notes](docs/RELEASE_v0.9.0.md)
+[English](#english) · [中文](#中文) · [Quickstart](QUICKSTART.md) · [Release notes](docs/RELEASE_v0.9.1.md)
 
 **Make a market judgment explainable: what supports it, what blocks it, and what would invalidate it.**
 
@@ -42,6 +42,8 @@ The script generates three Markdown/JSON/SVG cards under `outputs/three-cases`. 
 | [Breakout](examples/current/breakout/card.md) | Confirmed Breakout | Trade Ready | Research Only — mock data |
 | [No selected stop](examples/current/no-stop/card.md) | Confirmed Breakout | Avoid | Research Only — mock data |
 | [Overheated](examples/current/overheated/card.md) | Exhaustion | Veto | Research Only — mock data |
+
+The [0.9.1 audit](docs/AUDIT_2026-10-04.md) documents imported-card, recovery and skill-page corrections, with 147 regression cases.
 
 ### What works
 
@@ -84,6 +86,8 @@ Share a small reproducible fixture, its decision time and the expected blocker. 
 当前版本提供可运行的离线研究卡、日线现金模拟、观察列表、事件复核、不可覆盖的决策快照、结果回填、受约束仓位计算，以及导出恢复。演示可在完成安装后快速跑通；三个示例全部使用虚构数据，**“模拟准备就绪”不等于真实交易许可**。
 
 先读[快速开始](QUICKSTART.md)，再按[工作区指南](docs/WORKSPACE.md)完成保存与复盘。真实行情接口、券商下单、后台盯盘和收益优势均未验收。市场首先限定为美股/ETF日线现金研究；其他资产需要独立适配与验证。
+
+最新 [0.9.1 深度复核](docs/AUDIT_2026-10-04.md)修复了导入卡片、过期批准、恢复与旧技能正文的缺口，147 项测试检查工程行为。
 
 欢迎提交失败样本、安装问题和真实使用反馈。标签与封面服务于准确发现和分享，不保证GitHub推荐或自然流量。当前架构和验收见[六批路线](VERSION_ROADMAP.md)；旧设计保存在[历史档案](docs/archive/v0.5-design.md)，不能作为现版本能力证明。
 

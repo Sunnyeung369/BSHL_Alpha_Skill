@@ -8,11 +8,10 @@ from pathlib import Path
 import re
 import sqlite3
 import tempfile
-from urllib.parse import urlparse
 
 from data.contracts import validate_symbol
 from .market import parse_timestamp
-from .serialization import to_jsonable
+from .serialization import to_jsonable, loads
 
 
 TABLES = {
@@ -36,7 +35,41 @@ def digest(value):
     return sha256(canonical(value).encode("utf-8")).hexdigest()
 
 
-def validate_card(card):
+def _change_reasons(before, after):
+    reasons = []
+    if before["final_status"] != after["final_status"]:
+        reasons.append("readiness_changed")
+    if before["blockers"] != after["blockers"]:
+        reasons.append("blockers_changed")
+    if before["technical_structure"].get("state") != after["technical_structure"].get("state"):
+        reasons.append("structure_changed")
+    old_plan, new_plan = before["trade_plan"], after["trade_plan"]
+    if old_plan.get("stop_loss_defined") is True and new_plan["entry_price"] <= old_plan["stop_loss_price"]:
+        reasons.append("prior_stop_invalidation_hit")
+    return reasons
+
+
+def _candidate_payload(db, proposal):
+    if (not isinstance(proposal, dict) or not isinstance(proposal.get("rule_id"), str)
+            or not re.fullmatch(r"(?:research|structure)\.[a-zA-Z0-9_.-]+", proposal["rule_id"])):
+        raise ValueError("Only research/structure candidate namespaces are allowed; hard gates stay fixed")
+    if (not isinstance(proposal.get("comparison"), dict) or not isinstance(proposal.get("review_ids"), list)
+            or not proposal["review_ids"] or not all(isinstance(item, str) for item in proposal["review_ids"])):
+        raise ValueError("Candidate needs comparison results and existing review_ids")
+    unique_snapshots = set()
+    for record_id in proposal["review_ids"]:
+        review = db.execute("SELECT snapshot_id FROM reviews WHERE id=?", (record_id,)).fetchone()
+        if review is None:
+            raise ValueError("Unknown review reference")
+        unique_snapshots.add(review["snapshot_id"])
+    return {**to_jsonable(proposal), "review_ids": sorted(set(proposal["review_ids"])),
+            "unique_decision_count": len(unique_snapshots),
+            "evidence_status": "insufficient" if len(unique_snapshots) < 30 else "requires_independent_holdout",
+            "comparison_verification": "user_supplied_not_independently_verified",
+            "status": "candidate_only", "automatically_applied": False}
+
+
+def validate_card(card, *, historical=False):
     if not isinstance(card, dict) or card.get("schema_version") != "1.0":
         raise ValueError("Expected research card schema_version 1.0")
     for field in ("source", "technical_structure", "trade_readiness", "risk_governor", "evidence", "trade_plan", "context"):
@@ -55,6 +88,10 @@ def validate_card(card):
         raise ValueError("Invalid research status or data label")
     if card["is_mock"] and card["final_status"] != "Research Only":
         raise ValueError("Mock cards must remain Research Only")
+    if (card.get("data_mode") not in ("csv", "mock", "live")
+            or card.get("data_mode") == "mock" and card["is_mock"] is not True
+            or card["is_mock"] and card.get("data_mode") != "mock"):
+        raise ValueError("Invalid or conflicting card data mode")
     if not isinstance(card.get("rule_version"), str) or not card["rule_version"]:
         raise ValueError("Missing rule version")
     plan = card["trade_plan"]
@@ -68,6 +105,13 @@ def validate_card(card):
             or plan["stop_loss_defined"] != (stop is not None and stop < entry)
             or plan["target_defined"] != (target is not None and target > entry)):
         raise ValueError("Inconsistent selected-level flags")
+    from .engine import RULE_VERSION, _url
+    if not _url(card["source"].get("url")):
+        raise ValueError("Invalid card provenance URL")
+    if card["rule_version"] == RULE_VERSION:
+        _validate_calculated_card(card)
+    elif card["final_status"] == "Trade Ready" and not historical:
+        raise ValueError("Rebuild older/unknown Trade Ready cards with the current rules before importing")
     if card["final_status"] == "Trade Ready":
         from scoring.risk_governor_score import RiskGovernorScorer
         risk = card.get("risk_governor", {})
@@ -109,6 +153,74 @@ def validate_card(card):
         if type(plan.get("reward_risk_ratio")) not in (int, float) or abs(plan["reward_risk_ratio"] - ratio) > 1e-9 or (entry - stop) / entry > .10:
             raise ValueError("Inconsistent ratio or excessive stop distance")
     return to_jsonable(card)
+
+
+def _validate_calculated_card(card):
+    """Recheck derived gates without claiming to authenticate supplied market bars."""
+    from scoring import AlphaThesisScorer, MarketPricingScorer
+    from .engine import _score, _evidence_at, _risk_score, _trade_score
+    context, source, structure, plan = (card[key] for key in ("context", "source", "technical_structure", "trade_plan"))
+    allowed = {"alpha_scores", "pricing_scores", "risk_checks", "stop_loss_price", "target_price", "evidence"}
+    if set(context) - allowed:
+        raise ValueError("Unknown card context fields")
+    metrics = structure.get("metrics")
+    if not isinstance(metrics, dict):
+        raise ValueError("Card metrics must be an object")
+    from datetime import date
+    from .market import Dataset, validate_dataset
+    try:
+        declared = Dataset(symbol=card["symbol"], **{key: source[key] for key in
+            ("market", "timeframe", "currency", "timezone", "adjustment", "asset_type", "exchange")},
+            source_url=source["url"], retrieved_at=parse_timestamp(source["retrieved_at"]),
+            session_dates=tuple(date.fromisoformat(value) for value in source["session_dates"]),
+            is_mock=card["is_mock"], data_mode=card["data_mode"])
+        validate_dataset(declared)
+    except (KeyError, TypeError) as exc:
+        raise ValueError("Invalid declared card source") from exc
+    if source.get("verification") != "user_supplied_not_independently_verified":
+        raise ValueError("A card cannot authenticate its own supplied source")
+    at = parse_timestamp(card["as_of"])
+    close_at = parse_timestamp(metrics.get("latest_bar_timestamp"))
+    volume = metrics.get("latest_bar_volume")
+    if close_at > at or type(volume) not in (int, float) or not math.isfinite(volume) or volume < 0:
+        raise ValueError("Invalid last-bar time or volume")
+    if card["final_status"] == "Trade Ready" and (at - close_at).total_seconds() > 4 * 86400:
+        raise ValueError("Imported Trade Ready market data is stale")
+    if (metrics.get("price") != plan["entry_price"]
+            or context.get("stop_loss_price") != plan["stop_loss_price"]
+            or context.get("target_price") != plan["target_price"]):
+        raise ValueError("Selected levels or entry price disagree with the original context/metrics")
+    expected_ratio = ((plan["target_price"] - plan["entry_price"]) / (plan["entry_price"] - plan["stop_loss_price"])
+                      if plan["stop_loss_defined"] and plan["target_defined"] else None)
+    if (canonical(expected_ratio) != canonical(plan.get("reward_risk_ratio"))
+            or plan.get("stop_source") != ("user" if plan["stop_loss_price"] is not None else "absent")):
+        raise ValueError("Inconsistent selected-plan metadata")
+    evidence = _evidence_at(context.get("evidence", []), at)
+    risk = _risk_score(context, structure, evidence, market=source.get("market"), currency=source.get("currency"),
+                       entry=plan["entry_price"], stop=plan["stop_loss_price"], volume=volume)
+    expected = {
+        "alpha_thesis": _score(AlphaThesisScorer(), context.get("alpha_scores"), "alpha_scores"),
+        "market_pricing": _score(MarketPricingScorer(), context.get("pricing_scores"), "pricing_scores"),
+        "evidence": evidence, "risk_governor": risk,
+        "trade_readiness": _trade_score(structure, plan["stop_loss_defined"], expected_ratio),
+    }
+    for field, computed in expected.items():
+        if canonical(card[field]) != canonical(computed):
+            raise ValueError(f"Card {field} disagrees with recomputed context and gates")
+
+
+def _validate_approval(card, stamp, *, historical=False):
+    from .engine import RULE_VERSION, _evidence_at
+    validate_card(card, historical=historical)
+    # Preserve legacy decisions under their historical rules; new approvals
+    # always require the current rule version through validate_card above.
+    if historical and card["rule_version"] != RULE_VERSION:
+        return
+    close_at = parse_timestamp(card["technical_structure"]["metrics"]["latest_bar_timestamp"])
+    evidence = _evidence_at(card["context"].get("evidence", []), stamp)
+    if ((stamp - close_at).total_seconds() > 4 * 86400 or evidence["strong_support_count"] < 1
+            or evidence["active_kill_switch_count"]):
+        raise ValueError("Plan is stale or its evidence changed; reassess before recording approval")
 
 
 class Workspace:
@@ -158,7 +270,7 @@ class Workspace:
         row = db.execute("SELECT payload FROM snapshots WHERE id=?", (analysis_id,)).fetchone()
         if row is None:
             raise ValueError("Unknown snapshot")
-        return json.loads(row["payload"])
+        return loads(row["payload"])
 
     def snapshot(self, analysis_id):
         with self.connect() as db:
@@ -181,21 +293,12 @@ class Workspace:
                 before = self._snapshot(db, watched["snapshot_id"])
                 if parse_timestamp(card["as_of"]) < parse_timestamp(before["as_of"]):
                     raise ValueError("Cannot replace a watchlist with an older decision")
-                if before["final_status"] != card["final_status"]:
-                    changes.append("readiness_changed")
-                if before.get("blockers") != card.get("blockers"):
-                    changes.append("blockers_changed")
-                if before.get("technical_structure", {}).get("state") != card.get("technical_structure", {}).get("state"):
-                    changes.append("structure_changed")
-                price = card.get("trade_plan", {}).get("entry_price")
-                old_stop = before.get("trade_plan", {}).get("stop_loss_price")
-                if type(price) in (int, float) and type(old_stop) in (int, float) and price <= old_stop:
-                    changes.append("prior_stop_invalidation_hit")
+                changes = _change_reasons(before, card)
                 if changes:
                     event = {"before": watched["snapshot_id"], "after": card["analysis_id"], "as_of": card["as_of"], "reasons": changes}
                     db.execute("INSERT OR IGNORE INTO changes VALUES(?,?,?,?)", (digest(event), card["symbol"], card["analysis_id"], canonical(event)))
             if watch or watched:
-                effective = conditions if conditions is not None else json.loads(watched["conditions"]) if watched else []
+                effective = conditions if conditions is not None else loads(watched["conditions"]) if watched else []
                 db.execute("INSERT INTO watchlist VALUES(?,?,?) ON CONFLICT(symbol) DO UPDATE SET snapshot_id=excluded.snapshot_id, conditions=excluded.conditions",
                            (card["symbol"], card["analysis_id"], canonical(effective)))
             return {"analysis_id": card["analysis_id"], "changes": changes, "watched": bool(watch or watched)}
@@ -210,6 +313,8 @@ class Workspace:
                 raise ValueError("Decision predates snapshot")
             if choice == "approve_plan" and card["final_status"] != "Trade Ready":
                 raise ValueError("Only a non-mock Trade Ready plan may be recorded as approved")
+            if choice == "approve_plan":
+                _validate_approval(card, stamp)
             payload = {"choice": choice, "at": stamp.isoformat(), "note": note, "orders_placed": False}
             record_id = digest({"snapshot": analysis_id, **payload})
             db.execute("INSERT OR IGNORE INTO decisions VALUES(?,?,?)", (record_id, analysis_id, canonical(payload)))
@@ -238,8 +343,8 @@ class Workspace:
 
     def schedule(self, symbol, name, at, source_url):
         validate_symbol(symbol)
-        parsed = urlparse(source_url)
-        if parsed.scheme not in ("https", "http") or not parsed.hostname or not isinstance(name, str) or not name.strip():
+        from .engine import _url
+        if not _url(source_url) or not isinstance(name, str) or not name.strip():
             raise ValueError("Calendar event needs a name and HTTP(S) source")
         payload = {"name": name, "at": parse_timestamp(at).isoformat(), "source_url": source_url,
                    "verification": "user_supplied", "action": "review_research"}
@@ -251,32 +356,18 @@ class Workspace:
     def status(self, as_of):
         cutoff = parse_timestamp(as_of)
         state = self.export()["tables"]
-        due = [{"id": row["id"], "symbol": row["symbol"], **json.loads(row["payload"])} for row in state["calendar"]
-               if parse_timestamp(json.loads(row["payload"])["at"]) <= cutoff]
+        due = [{"id": row["id"], "symbol": row["symbol"], **loads(row["payload"])} for row in state["calendar"]
+               if parse_timestamp(loads(row["payload"])["at"]) <= cutoff]
         snapshots = {row["id"]: row for row in state["snapshots"]}
-        return {"watchlist": [{**row, "conditions": json.loads(row["conditions"])} for row in state["watchlist"]
+        return {"watchlist": [{**row, "conditions": loads(row["conditions"])} for row in state["watchlist"]
                     if parse_timestamp(snapshots[row["snapshot_id"]]["as_of"]) <= cutoff],
-                "changes": [{"id": row["id"], "symbol": row["symbol"], **json.loads(row["payload"])} for row in state["changes"]
-                    if parse_timestamp(json.loads(row["payload"])["as_of"]) <= cutoff],
+                "changes": [{"id": row["id"], "symbol": row["symbol"], **loads(row["payload"])} for row in state["changes"]
+                    if parse_timestamp(loads(row["payload"])["as_of"]) <= cutoff],
                 "events_due_for_review": due, "automatic_monitoring": False, "orders_placed": False}
 
     def propose(self, proposal):
-        if not isinstance(proposal, dict) or not str(proposal.get("rule_id", "")).startswith(("research.", "structure.")):
-            raise ValueError("Only research/structure candidate namespaces are allowed; hard gates stay fixed")
-        if not isinstance(proposal.get("comparison"), dict) or not proposal.get("review_ids") or not isinstance(proposal.get("review_ids"), list):
-            raise ValueError("Candidate needs comparison results and existing review_ids")
         with self.connect() as db:
-            unique_snapshots = set()
-            for record_id in proposal["review_ids"]:
-                review = db.execute("SELECT snapshot_id FROM reviews WHERE id=?", (record_id,)).fetchone()
-                if review is None:
-                    raise ValueError("Unknown review reference")
-                unique_snapshots.add(review["snapshot_id"])
-            payload = {**to_jsonable(proposal), "review_ids": sorted(set(proposal["review_ids"])),
-                       "unique_decision_count": len(unique_snapshots),
-                       "evidence_status": "insufficient" if len(unique_snapshots) < 30 else "requires_independent_holdout",
-                       "comparison_verification": "user_supplied_not_independently_verified",
-                       "status": "candidate_only", "automatically_applied": False}
+            payload = _candidate_payload(db, proposal)
             record_id = digest(payload)
             db.execute("INSERT OR IGNORE INTO candidates VALUES(?,?)", (record_id, canonical(payload)))
             return record_id
@@ -290,9 +381,9 @@ class Workspace:
             candidate = db.execute("SELECT payload FROM candidates WHERE id=?", (candidate_id,)).fetchone()
             if candidate is None:
                 raise ValueError("Unknown candidate")
-            for review_id in json.loads(candidate["payload"])["review_ids"]:
+            for review_id in loads(candidate["payload"])["review_ids"]:
                 review = db.execute("SELECT payload FROM reviews WHERE id=?", (review_id,)).fetchone()
-                if parse_timestamp(payload["at"]) < parse_timestamp(json.loads(review["payload"])["at"]):
+                if parse_timestamp(payload["at"]) < parse_timestamp(loads(review["payload"])["at"]):
                     raise ValueError("Candidate decision predates its review evidence")
             db.execute("INSERT OR IGNORE INTO candidate_decisions VALUES(?,?,?)", (record_id, candidate_id, canonical(payload)))
         return record_id
@@ -324,14 +415,14 @@ class Workspace:
                         if not isinstance(row, dict) or set(row) != set(columns) or not all(isinstance(value, str) for value in row.values()):
                             raise ValueError("Invalid export row")
                         if table == "snapshots":
-                            card = validate_card(json.loads(row["payload"]))
+                            card = validate_card(loads(row["payload"]), historical=True)
                             if (row["digest"] != digest(card) or row["id"] != card["analysis_id"]
                                     or row["symbol"] != card["symbol"] or row["as_of"] != card["as_of"]):
                                 raise ValueError("Snapshot integrity mismatch")
                         if "payload" in row:
-                            json.loads(row["payload"])
+                            loads(row["payload"])
                         if table == "watchlist":
-                            json.loads(row["conditions"])
+                            loads(row["conditions"])
                         db.execute(f"INSERT INTO {table}({','.join(columns)}) VALUES({','.join('?' for _ in columns)})", tuple(row[key] for key in columns))
                 if db.execute("PRAGMA foreign_key_check").fetchall():
                     raise ValueError("Broken snapshot references")
@@ -348,14 +439,14 @@ class Workspace:
         """A recomputed checksum cannot legitimize invalid domain records."""
         for row in db.execute("SELECT * FROM watchlist"):
             card = cls._snapshot(db, row["snapshot_id"])
-            conditions = json.loads(row["conditions"])
+            conditions = loads(row["conditions"])
             if row["symbol"] != card["symbol"] or not isinstance(conditions, list) or not all(isinstance(item, str) and item.strip() for item in conditions):
                 raise ValueError("Invalid restored watchlist")
         for table in TABLES:
             if table in ("snapshots", "watchlist"):
                 continue
             for row in db.execute(f"SELECT * FROM {table}"):
-                payload = json.loads(row["payload"])
+                payload = loads(row["payload"])
                 if not isinstance(payload, dict):
                     raise ValueError("Record payload must be an object")
                 identity = dict(payload)
@@ -368,24 +459,36 @@ class Workspace:
                     identity["symbol"] = row["symbol"]
                     validate_symbol(row["symbol"])
                     parse_timestamp(payload.get("at"))
-                    parsed = urlparse(payload.get("source_url", ""))
-                    if parsed.scheme not in ("https", "http") or not parsed.hostname:
+                    from .engine import _url
+                    if (not _url(payload.get("source_url")) or not isinstance(payload.get("name"), str)
+                            or not payload["name"].strip() or payload.get("action") != "review_research"
+                            or payload.get("verification") != "user_supplied"):
                         raise ValueError("Invalid restored calendar source")
                 elif table == "candidate_decisions":
                     identity["candidate"] = row["candidate_id"]
                     parse_timestamp(payload.get("at"))
-                    if payload.get("choice") not in ("approve_for_holdout", "reject") or payload.get("automatically_applied") is not False:
+                    if (payload.get("choice") not in ("approve_for_holdout", "reject") or payload.get("automatically_applied") is not False
+                            or not isinstance(payload.get("note"), str) or not payload["note"].strip()):
                         raise ValueError("Invalid restored candidate decision")
+                    candidate = loads(db.execute("SELECT payload FROM candidates WHERE id=?", (row["candidate_id"],)).fetchone()["payload"])
+                    for review_id in candidate.get("review_ids", []):
+                        review = db.execute("SELECT payload FROM reviews WHERE id=?", (review_id,)).fetchone()
+                        if review is None or parse_timestamp(payload["at"]) < parse_timestamp(loads(review["payload"])["at"]):
+                            raise ValueError("Restored candidate decision predates its review evidence")
                 if row["id"] != digest(identity):
                     raise ValueError("Record ID mismatch")
                 if table == "decisions":
                     if (payload.get("choice") not in ("research", "wait", "approve_plan", "reject_plan")
+                            or not isinstance(payload.get("note"), str)
                             or payload.get("orders_placed") is not False
                             or payload["choice"] == "approve_plan" and card["final_status"] != "Trade Ready"):
                         raise ValueError("Invalid restored user decision")
+                    if payload["choice"] == "approve_plan":
+                        _validate_approval(card, parse_timestamp(payload["at"]), historical=True)
                 if table == "reviews":
                     outcome, r, costs = payload.get("outcome"), payload.get("realized_r_after_costs"), payload.get("costs")
                     if (outcome not in ("profit", "loss", "unknown", "no_trade")
+                            or not isinstance(payload.get("note"), str)
                             or type(costs) not in (int, float) or not math.isfinite(costs) or costs < 0
                             or r is not None and (type(r) not in (int, float) or not math.isfinite(r))
                             or outcome == "profit" and (r is None or r <= 0)
@@ -397,10 +500,11 @@ class Workspace:
                     after = cls._snapshot(db, payload.get("after"))
                     if row["symbol"] != before["symbol"] or row["symbol"] != after["symbol"] or row["snapshot_id"] != after["analysis_id"]:
                         raise ValueError("Invalid restored change references")
+                    if (parse_timestamp(payload.get("as_of")) != parse_timestamp(after["as_of"])
+                            or parse_timestamp(before["as_of"]) > parse_timestamp(after["as_of"])
+                            or not isinstance(payload.get("reasons"), list) or not payload["reasons"]
+                            or payload["reasons"] != _change_reasons(before, after)):
+                        raise ValueError("Invalid restored change time or reasons")
                 if table == "candidates":
-                    if (not str(payload.get("rule_id", "")).startswith(("research.", "structure."))
-                            or payload.get("automatically_applied") is not False or payload.get("status") != "candidate_only"):
-                        raise ValueError("Invalid restored hard-gate candidate")
-                    for review_id in payload.get("review_ids", []):
-                        if db.execute("SELECT id FROM reviews WHERE id=?", (review_id,)).fetchone() is None:
-                            raise ValueError("Missing restored review evidence")
+                    if canonical(payload) != canonical(_candidate_payload(db, payload)):
+                        raise ValueError("Restored candidate differs from its recomputed review evidence")

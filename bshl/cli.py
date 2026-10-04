@@ -1,11 +1,10 @@
 """BSHL command line. No credentials or automatic orders."""
 import argparse
-import json
 from pathlib import Path
 import sys
 import sqlite3
 from .cards import write_card
-from .serialization import dumps
+from .serialization import dumps, loads
 
 
 def build_parser():
@@ -81,19 +80,19 @@ def main(argv=None):
     try:
         if args.command == "share":
             from .share import write_share
-            path = write_share(json.loads(Path(args.card).read_text(encoding="utf-8")), args.output)
+            path = write_share(loads(Path(args.card).read_text(encoding="utf-8-sig")), args.output)
             print(dumps({"share_card": str(path)}))
             return 0
         if args.command == "journal":
             from .workspace import Workspace
             from .files import write_json
             if args.action == "restore":
-                workspace = Workspace.restore(json.loads(Path(args.input).read_text(encoding="utf-8")), args.target)
+                workspace = Workspace.restore(loads(Path(args.input).read_text(encoding="utf-8-sig")), args.target)
                 result = {"restored": str(workspace.path)}
             else:
                 workspace = Workspace(args.db)
                 if args.action == "save":
-                    result = workspace.save(json.loads(Path(args.card).read_text(encoding="utf-8")), watch=args.watch, conditions=args.condition)
+                    result = workspace.save(loads(Path(args.card).read_text(encoding="utf-8-sig")), watch=args.watch, conditions=args.condition)
                 elif args.action == "status":
                     result = workspace.status(args.as_of)
                 elif args.action == "decide":
@@ -103,7 +102,7 @@ def main(argv=None):
                 elif args.action == "event":
                     result = {"id": workspace.schedule(args.symbol, args.name, args.at, args.source)}
                 elif args.action == "propose":
-                    result = {"id": workspace.propose(json.loads(Path(args.proposal).read_text(encoding="utf-8")))}
+                    result = {"id": workspace.propose(loads(Path(args.proposal).read_text(encoding="utf-8-sig")))}
                 elif args.action == "candidate-review":
                     result = {"id": workspace.approve_candidate(args.id, args.choice, args.at, args.note)}
                 else:
@@ -113,8 +112,8 @@ def main(argv=None):
         if args.command == "size":
             from .portfolio import size_plan
             from .files import write_json
-            result = size_plan(json.loads(Path(args.card).read_text(encoding="utf-8")),
-                               json.loads(Path(args.account).read_text(encoding="utf-8")))
+            result = size_plan(loads(Path(args.card).read_text(encoding="utf-8-sig")),
+                               loads(Path(args.account).read_text(encoding="utf-8-sig")))
             print(dumps({"report": str(write_json(result, args.output))}))
             return 0
         from .market import load_dataset, parse_timestamp
@@ -124,12 +123,12 @@ def main(argv=None):
             from .backtest import BacktestConfig, run_backtest
             from .files import write_json
             dataset = load_dataset(args.csv, args.metadata)
-            config = json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {}
+            config = loads(Path(args.config).read_text(encoding="utf-8-sig")) if args.config else {}
             setup = BacktestConfig(train_end=date.fromisoformat(args.train_end),
                                    test_start=date.fromisoformat(args.test_start), **config)
             result = run_backtest(dataset, setup)
             if args.compare_config:
-                candidate = json.loads(Path(args.compare_config).read_text(encoding="utf-8"))
+                candidate = loads(Path(args.compare_config).read_text(encoding="utf-8-sig"))
                 candidate_setup = BacktestConfig(train_end=setup.train_end, test_start=setup.test_start, **candidate)
                 alternative = run_backtest(dataset, candidate_setup)
                 result = {"baseline": result, "candidate": alternative, "automatically_applied": False,
@@ -143,13 +142,13 @@ def main(argv=None):
             assets = Path(__file__).with_name("assets")
             scenario = "overheated" if args.scenario == "overheated" else "breakout"
             dataset = load_dataset(assets / (scenario + ".csv"), assets / (scenario + ".metadata.json"))
-            context = json.loads((assets / "demo.context.json").read_text(encoding="utf-8"))
+            context = loads((assets / "demo.context.json").read_text(encoding="utf-8-sig"))
             if args.scenario == "no-stop":
                 context.pop("stop_loss_price")
             as_of = None
         else:
             dataset = load_dataset(args.csv, args.metadata)
-            context = json.loads(Path(args.context).read_text(encoding="utf-8"))
+            context = loads(Path(args.context).read_text(encoding="utf-8-sig"))
             as_of = parse_timestamp(args.as_of) if args.as_of else None
         card = build_card(dataset, context, as_of=as_of)
         path = write_card(card, args.output)

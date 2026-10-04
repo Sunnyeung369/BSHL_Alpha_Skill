@@ -229,7 +229,8 @@ Real World Assets，现实世界资产代币化。
 | 降仓 | Reduce Size | 降低仓位 |
 | 仅观察 | Watch Only | 只观察，不交易 |
 | 等确认 | Wait Confirmation | 等待进一步确认 |
-| 否决 | Veto | 一票否决 |
+| 等待 | Wait | 条件失败，等待后重评 |
+| 否决 | Veto | 硬风险否决 |
 
 ---
 

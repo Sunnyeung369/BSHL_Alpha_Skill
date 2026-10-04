@@ -109,6 +109,8 @@ class PositionRiskScorer:
                             ("total_exposure", total_exposure)):
             number(name, value, 0, 1)
         number("leverage_ratio", leverage_ratio, 1)
+        if sector_concentration > total_exposure + 1e-12:
+            raise ValueError("total_exposure must include sector_concentration")
         number("correlation_risk", correlation_risk, 0, 10)
         number("liquidity_risk", liquidity_risk, 0, 10)
         number("total_capital", total_capital, 0)

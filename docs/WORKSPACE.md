@@ -24,7 +24,7 @@ Replace `ANALYSIS_ID`; it is a placeholder, not an executable literal. The last 
 
 When you import a new card for a watched symbol, saving it updates the watchlist and records changes to status, structure and blockers. A new price <= the previous selected stop produces an invalidation reason. Older snapshots cannot replace a newer watchlist. Conditions are human review instructions; the software does not interpret arbitrary condition prose. Reassessment and calendar reminders run when you invoke the CLI. No background service, email or automatic monitoring is installed. `status --as-of` filters current watch rows and recorded changes/events by that time; it does not reconstruct past watch configuration.
 
-`approve_plan` is only a recorded human choice for a non-mock Trade Ready card. It never places an order. Profit/loss review requires a signed realized R after costs, with review time >= decision time. Unknown and no-trade outcomes have no fabricated return.
+`approve_plan` is only a recorded human choice for a non-mock Trade Ready card. It never places an order. Profit/loss review requires a signed realized R after costs, with review time >= snapshot research time. Unknown and no-trade outcomes have no fabricated return.
 
 ## Constrained position calculation
 
@@ -39,3 +39,13 @@ Use `backtest --compare-config candidate.json` with fixed split dates to compare
 `journal propose --proposal proposal.json` accepts `rule_id` in `research.` or `structure.`, a `comparison` object and existing `review_ids`. Hard-risk namespaces are rejected; proposals cannot change runtime gates. Unique decisions are counted from the journal, not supplied sample claims. Fewer than 30 are marked insufficient; 30 is a reporting floor, not statistical certification. Comparison claims remain user-supplied. `journal candidate-review --id ID --choice approve_for_holdout --at OFFSET_DATETIME --note RATIONALE` records human approval for new holdout evaluation, not production deployment.
 
 Export keeps all records, hashes and references. Restore validates format, checksums, snapshot identity, relationships and decision/outcome gates, then publishes a complete database exclusively at a **new** path. It refuses to overwrite an existing journal. Preserve private exports yourself; SQLite is not encryption. Restore requires same-volume hard-link support (NTFS and normal CI filesystems). There is no automatic migration from the old `~/.bshl` personal store.
+
+## Revalidation and historical recovery (0.9.1)
+
+New plan approval revalidates the current card rules, the four-calendar-day market freshness limit and supporting evidence at the approval time. Expired support or a newly available kill switch requires reassessment; an old Trade Ready label cannot substitute for new research.
+
+Recovery recomputes candidate sample counts from referenced decisions, rejects approvals predating their reviews, and compares recorded change reasons/times with the original cards. Calendar sources cannot embed login credentials. Resealing an export checksum does not bypass these domain checks.
+
+Older valid journal history can be restored without rewriting its snapshots. Older/unknown Trade Ready cards must be regenerated with current rules before new approval, sizing or current-card import. Historical restoration is archival preservation, not current permission. Keep the original export and verify restored records; no overwrite or automatic conversion is performed.
+
+Existing immutable databases created by 0.9.0 remain readable. The core strategy assumptions and hard thresholds are unchanged. New latest-bar fields change card identities under readiness-0.6.3; use new output folders and preserve old exports.

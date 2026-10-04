@@ -111,6 +111,8 @@ def validate_dataset(dataset: Dataset) -> None:
         raise ValueError("source_url must be an HTTP(S) provenance URL")
     if dataset.retrieved_at is None:
         raise ValueError("retrieved_at is required")
+    if not isinstance(dataset.retrieved_at, datetime):
+        raise ValueError("Dataset retrieved_at must be a datetime; parse serialized timestamps first")
     parse_timestamp(dataset.retrieved_at)
     if not isinstance(dataset.bars, tuple) or not isinstance(dataset.session_dates, tuple):
         raise ValueError("bars and session_dates must be immutable tuples")
@@ -127,6 +129,9 @@ def validate_dataset(dataset: Dataset) -> None:
     for bar in dataset.bars:
         if not isinstance(bar, Bar):
             raise ValueError("bars must contain Bar objects")
+        if (not isinstance(bar.timestamp, datetime) or not isinstance(bar.available_at, datetime)
+                or bar.session_open is not None and not isinstance(bar.session_open, datetime)):
+            raise ValueError("Bar time fields must be datetime objects; parse serialized timestamps first")
         stamp, available = parse_timestamp(bar.timestamp), parse_timestamp(bar.available_at)
         if available < stamp:
             raise ValueError("available_at cannot precede the bar close timestamp")

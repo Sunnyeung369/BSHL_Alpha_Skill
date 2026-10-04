@@ -14,7 +14,7 @@ from .serialization import to_jsonable
 from .structure import analyze_structure
 
 
-RULE_VERSION = "readiness-0.6.2"
+RULE_VERSION = "readiness-0.6.3"
 SCHEMA_VERSION = "1.0"
 STRONG_SOURCE_TYPES = {"filing", "transcript", "company_release", "industry_report"}
 READY_STRUCTURES = {"Confirmed Breakout", "Pullback Entry Zone"}
@@ -114,6 +114,41 @@ def _trade_score(structure, stop_defined, rr):
         closed_bar_confirmed=structure["closed_bar_confirmed"], stop_loss_defined=stop_defined)
 
 
+def _risk_score(context, structure, evidence, *, market, currency, entry, stop, volume):
+    """Shared measured/manual gates for generation and imported-card revalidation."""
+    metrics = structure["metrics"]
+    stop_defined = stop is not None and 0 < stop < entry
+    supplied_risk = context.get("risk_checks", {})
+    if not isinstance(supplied_risk, dict):
+        raise TypeError("risk_checks must be an object")
+    unknown_risk = set(supplied_risk) - set(RiskGovernorScorer.ITEMS)
+    if unknown_risk:
+        raise ValueError(f"Unknown risk_checks: {sorted(unknown_risk)}")
+    checks = {name: optional_bool(name, supplied_risk.get(name)) for name in RiskGovernorScorer.ITEMS}
+    # Measured failures can tighten a manual check; they cannot fill unknowns.
+    if stop is not None and not stop_defined:
+        checks["stop_loss_distance"] = False
+    if stop_defined and (entry - stop) / entry > .10:
+        checks["stop_loss_distance"] = False
+    if metrics.get("overheated") is True:
+        checks["price_location"] = False
+    if metrics.get("atr_percent") is not None and metrics["atr_percent"] > 5:
+        checks["volatility"] = False
+    if market == "US" and currency == "USD" and volume * entry < 10_000_000:
+        checks["liquidity"] = False
+    if evidence["strong_support_count"] == 0:
+        checks["evidence_quality"] = False
+    risk = RiskGovernorScorer().check(**checks)
+    if evidence["active_kill_switch_count"]:
+        kill = RiskCheckItem("thesis_kill_switch", False, "Available evidence activates the thesis kill switch", "critical")
+        risk.decision = RiskDecision.VETO
+        risk.triggered_conditions.append(kill)
+        risk.reasoning.append(kill.detail)
+        risk.risk_warnings.append(kill.detail)
+        risk.suggested_action = "Thesis vetoed; do not enter execution preparation"
+    return risk
+
+
 def build_card(dataset, context: dict, as_of=None) -> dict:
     """Build an immutable JSON snapshot from information available at as_of.
 
@@ -157,34 +192,8 @@ def build_card(dataset, context: dict, as_of=None) -> dict:
     alpha = _score(AlphaThesisScorer(), context.get("alpha_scores"), "alpha_scores")
     pricing = _score(MarketPricingScorer(), context.get("pricing_scores"), "pricing_scores")
     evidence = _evidence_at(context.get("evidence", []), decision_time)
-    supplied_risk = context.get("risk_checks", {})
-    if not isinstance(supplied_risk, dict):
-        raise TypeError("risk_checks must be an object")
-    unknown_risk = set(supplied_risk) - set(RiskGovernorScorer.ITEMS)
-    if unknown_risk:
-        raise ValueError(f"Unknown risk_checks: {sorted(unknown_risk)}")
-    checks = {name: optional_bool(name, supplied_risk.get(name)) for name in RiskGovernorScorer.ITEMS}
-    # Measured failures can tighten a manual check; they cannot fill unknowns.
-    if stop is not None and not stop_defined:
-        checks["stop_loss_distance"] = False
-    if stop_defined and (entry - stop) / entry > .10:
-        checks["stop_loss_distance"] = False
-    if metrics.get("overheated") is True:
-        checks["price_location"] = False
-    if metrics.get("atr_percent") is not None and metrics["atr_percent"] > 5:
-        checks["volatility"] = False
-    if visible.market == "US" and visible.currency == "USD" and visible.bars[-1].volume * entry < 10_000_000:
-        checks["liquidity"] = False
-    if evidence["strong_support_count"] == 0:
-        checks["evidence_quality"] = False
-    risk = RiskGovernorScorer().check(**checks)
-    if evidence["active_kill_switch_count"]:
-        kill = RiskCheckItem("thesis_kill_switch", False, "Available evidence activates the thesis kill switch", "critical")
-        risk.decision = RiskDecision.VETO
-        risk.triggered_conditions.append(kill)
-        risk.reasoning.append(kill.detail)
-        risk.risk_warnings.append(kill.detail)
-        risk.suggested_action = "Thesis vetoed; do not enter execution preparation"
+    risk = _risk_score(context, structure, evidence, market=visible.market, currency=visible.currency,
+                       entry=entry, stop=stop, volume=visible.bars[-1].volume)
     trade = _trade_score(structure, stop_defined, rr)
     blockers = []
     profile_supported = (visible.market == "US" and visible.currency == "USD"
@@ -259,7 +268,7 @@ def build_card(dataset, context: dict, as_of=None) -> dict:
                                     separators=(",", ":"), allow_nan=False).encode("utf-8")).hexdigest()
     return to_jsonable({"schema_version": SCHEMA_VERSION, "rule_version": RULE_VERSION,
         "analysis_id": analysis_id, "symbol": visible.symbol, "as_of": decision_time,
-        "data_mode": visible.data_mode, "is_mock": visible.is_mock, "source": source,
+        "data_mode": "mock" if visible.is_mock else visible.data_mode, "is_mock": visible.is_mock, "source": source,
         "technical_structure": structure, "alpha_thesis": alpha, "market_pricing": pricing,
         "trade_readiness": trade, "risk_governor": risk, "evidence": evidence,
         "trade_plan": {"entry_price": entry, "stop_loss_price": stop, "target_price": target,

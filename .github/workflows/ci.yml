@@ -23,5 +23,5 @@ jobs:
       - run: python scripts/validate_examples.py
       - run: python scripts/run_demo.py --output outputs/ci-demo
       - run: python -m pip wheel . --no-deps --wheel-dir outputs/wheels
-      - run: python scripts/smoke_wheel.py --wheel outputs/wheels/bshl_alpha-0.9.0-py3-none-any.whl
+      - run: python scripts/smoke_wheel.py --wheel-dir outputs/wheels
 

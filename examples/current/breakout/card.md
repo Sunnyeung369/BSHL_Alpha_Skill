@@ -3,7 +3,7 @@
 **State:** Research Only
 **Data:** MOCK / SYNTHETIC
 **As of:** 2025-05-23T20:00:00+00:00
-**Analysis ID:** eec8fc5ced08cb30481dc9360c5233f4bc422762db4462c4e39056b6da011fec
+**Analysis ID:** 95f4b178a241d895e962769c47c6d5a93777ec9b3748db47aced5ba4a3b14e79
 
 ## Reasons / blockers
 
@@ -14,8 +14,8 @@
 ```json
 {
   "schema_version": "1.0",
-  "rule_version": "readiness-0.6.2",
-  "analysis_id": "eec8fc5ced08cb30481dc9360c5233f4bc422762db4462c4e39056b6da011fec",
+  "rule_version": "readiness-0.6.3",
+  "analysis_id": "95f4b178a241d895e962769c47c6d5a93777ec9b3748db47aced5ba4a3b14e79",
   "symbol": "DEMO",
   "as_of": "2025-05-23T20:00:00+00:00",
   "data_mode": "mock",
@@ -150,6 +150,8 @@
       "atr_percent": 1.7729375781035517,
       "price": 126.0,
       "volume_ratio": 3.0,
+      "latest_bar_timestamp": "2025-05-23T20:00:00+00:00",
+      "latest_bar_volume": 3000000.0,
       "distance_from_ma20_atr": 1.749875840659427,
       "parent_cycle": "UP",
       "parent_week_confirmed": true,

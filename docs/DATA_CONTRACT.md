@@ -32,3 +32,11 @@ Parent weeks require all declared sessions and coverage beyond the week boundary
 ## Output
 
 [Research-card schema](../schemas/research_card.schema.json) documents the JSON. `analysis_id` hashes visible inputs, provenance, context and rule version. Repeated identical inputs yield identical cards. Future bar values cannot change an earlier card; changing metadata or stored context creates a different audit identity even if the decision stays the same. Output refuses to overwrite a different card.
+
+## Imported-card validation (0.9.1)
+
+Current cards retain the latest visible close timestamp and volume. Journal import, sizing and sharing recheck provenance labels, selected levels, derived scores, timestamped evidence and risk gates from the saved context; stale imported Trade Ready cards fail. Generation and import share the measured-risk calculator.
+
+This detects internal contradictions, not forged market truth. A card does not contain all original OHLCV, so it cannot independently reconstruct its analysis_id or rerun price structure. Preserve the original CSV/metadata/context to reproduce an analysis. Checksums are not signatures or source authentication.
+
+CLI JSON accepts UTF-8 with or without BOM and rejects duplicate fields and nonstandard NaN/Infinity. An explicitly synthetic CSV is exported with canonical mock labels even when its input transport mode is csv.

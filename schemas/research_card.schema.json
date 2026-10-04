@@ -890,6 +890,44 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "rule_version": {
+            "const": "readiness-0.6.3"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "technical_structure": {
+            "properties": {
+              "metrics": {
+                "required": [
+                  "latest_bar_timestamp",
+                  "latest_bar_volume",
+                  "price"
+                ],
+                "properties": {
+                  "latest_bar_timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "latest_bar_volume": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "price": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }

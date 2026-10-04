@@ -187,7 +187,7 @@
 
 **目的**: 风险否决
 
-**一票否决条件**:
+**风险检查项（失败结果按[风控工作流](risk_governor_check.md)映射）**:
 - [ ] 流动性不足
 - [ ] 波动过大
 - [ ] 证据质量太弱
@@ -206,7 +206,7 @@
 **仓位**: [建议仓位]
 **相关性**: [与其他持仓相关性]
 **止损可执行性**: [清晰/模糊]
-**最终风控结论**: [Pass/Reduce Size/Watch Only/Wait/Veto]
+**最终风控结论**: [Pass/Reduce Size/Watch Only/Wait Confirmation/Wait/Veto]
 ```
 
 ---
@@ -289,7 +289,7 @@
 **仓位**: [建议仓位]
 **相关性**: [与其他持仓相关性]
 **止损可执行性**: [清晰/模糊]
-**最终风控结论**: [Pass/Reduce Size/Watch Only/Wait/Veto]
+**最终风控结论**: [Pass/Reduce Size/Watch Only/Wait Confirmation/Wait/Veto]
 
 ### 八、行动建议
 **研究动作**:

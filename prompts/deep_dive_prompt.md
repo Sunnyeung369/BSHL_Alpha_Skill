@@ -102,7 +102,7 @@ Layer 6: Risk Governor → 风险否决
 **流动性**: [充足/不足]
 **波动**: [可控/过大]
 **相关性**: [与其他持仓相关性]
-**最终风控结论**: [Pass/Reduce Size/Watch Only/Wait/Veto]
+**最终风控结论**: [Pass/Reduce Size/Watch Only/Wait Confirmation/Wait/Veto]
 
 ### 八、行动建议
 **观察动作**:
@@ -206,7 +206,7 @@ Risk Governor 有最高否决权。
 **本系统不做三件事**:
 1. 不做人格模仿
 2. 不直接给无条件买卖指令
-3. 不默认自动下单
+3. 不包含自动下单
 
 **所有交易决策需用户人工确认。**
 

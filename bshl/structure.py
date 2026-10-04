@@ -187,6 +187,8 @@ def analyze_structure(dataset: Dataset, as_of: datetime | None = None, config=No
             "metrics": {"ma20": ma20, "ma50": ma50, "atr": atr,
                         "atr_percent": atr / price * 100 if atr is not None and price else None,
                         "price": price, "volume_ratio": volume_ratio,
+                        "latest_bar_timestamp": last.timestamp.isoformat() if last else None,
+                        "latest_bar_volume": last.volume if last else None,
                         "distance_from_ma20_atr": distance, "parent_cycle": parent,
                         "parent_week_confirmed": parent_confirmed, "parent_weeks": weekly,
                         "pivot_high_confirmed": bool(highs), "pivot_low_confirmed": bool(lows),
