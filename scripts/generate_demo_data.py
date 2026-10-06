@@ -15,7 +15,7 @@ while len(sessions) < 100:
     if day.weekday() < 5:
         sessions.append(day)
     day += timedelta(days=1)
-for scenario in ("breakout", "overheated"):
+for scenario in ("breakout", "overheated", "pullback", "breakdown"):
     rows = []
     previous = 100.0
     for index, day in enumerate(sessions):
@@ -23,8 +23,26 @@ for scenario in ("breakout", "overheated"):
         if 88 <= index < 99:
             close = [120.5, 121, 124, 123, 122, 121.5, 122, 122.5, 123, 123.5, 124][index - 88]
         if index == 99:
-            close = 126 if scenario == "breakout" else 155
+            if scenario == "breakout":
+                close = 126
+            elif scenario == "overheated":
+                close = 155
+            elif scenario == "pullback":
+                # Green candle closing at prior resistance; rebound after
+                # the breakout that occurred at index 96 (within lookback=5).
+                close = 125.5
+            elif scenario == "breakdown":
+                # Close below the confirmed pivot low at 120.
+                close = 119
         opening = round(previous + .1, 4)
+        # For the pullback scenario the last bar must be a green candle
+        # (close > open) to satisfy the pullback_confirmed rule.
+        if scenario == "pullback" and index == 99:
+            opening = 124.5
+        # For the breakdown scenario the last bar opens near the support and
+        # closes below it.
+        if scenario == "breakdown" and index == 99:
+            opening = 119.5
         stamp = datetime.combine(day, time(16), ZoneInfo("America/New_York")).astimezone(timezone.utc)
         session_open = datetime.combine(day, time(9, 30), ZoneInfo("America/New_York")).astimezone(timezone.utc)
         rows.append({"timestamp": stamp.isoformat(), "open": opening,
@@ -36,6 +54,26 @@ for scenario in ("breakout", "overheated"):
     # A strict local maximum/minimum, confirmed by subsequent daily bars.
     rows[90]["high"] = 125.0
     rows[93]["low"] = 120.0
+    # For pullback: need a breakout bar earlier in the lookback window.
+    # Bar 96 already closes at 122.5 which is below resistance (125).
+    # We need at least one bar in [95..98] that broke above resistance
+    # and the previous bar was below it.  Use bar 96 as the breakout bar.
+    if scenario == "pullback":
+        rows[95]["close"] = 124.9   # bar before breakout: below resistance
+        rows[95]["high"] = max(rows[95]["high"], 125.7)
+        rows[96]["close"] = 125.2   # breakout bar: closes above resistance * 1.001
+        rows[96]["high"] = max(rows[96]["high"], 126.0)
+        rows[96]["open"] = 124.8
+        rows[96]["low"] = min(rows[96]["low"], 124.0)
+        # Bars 97-98 pull back toward resistance to set up the rebound.
+        rows[97]["close"] = 125.0
+        rows[97]["open"] = 125.3
+        rows[97]["high"] = max(rows[97]["high"], 126.0)
+        rows[97]["low"] = min(rows[97]["low"], 124.8)
+        rows[98]["close"] = 125.1
+        rows[98]["open"] = 125.0
+        rows[98]["high"] = max(rows[98]["high"], 125.9)
+        rows[98]["low"] = min(rows[98]["low"], 124.5)
     with (assets / (scenario + ".csv")).open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
         writer.writeheader()

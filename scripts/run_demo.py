@@ -1,4 +1,4 @@
-"""Three offline examples; checks outcomes and reports measured runtime."""
+"""Five offline examples; checks outcomes and reports measured runtime."""
 import argparse
 import json
 from pathlib import Path
@@ -16,8 +16,13 @@ def run(output):
     started = time.perf_counter()
     assets = Path(__file__).resolve().parents[1] / "bshl/assets"
     results = []
-    for scenario in ("breakout", "no-stop", "overheated"):
-        name = "overheated" if scenario == "overheated" else "breakout"
+    for scenario in ("breakout", "no-stop", "overheated", "pullback-rebound", "breakdown"):
+        if scenario == "pullback-rebound":
+            name = "pullback"
+        elif scenario == "overheated":
+            name = "overheated"
+        else:
+            name = "breakout" if scenario in ("breakout", "no-stop") else scenario
         data = load_dataset(assets / (name + ".csv"), assets / (name + ".metadata.json"))
         context = json.loads((assets / "demo.context.json").read_text(encoding="utf-8"))
         if scenario == "no-stop":
@@ -30,9 +35,16 @@ def run(output):
         elif scenario == "no-stop":
             assert "user_stop_missing_or_invalid" in card["blockers"]
             assert card["simulation_status"] != "Trade Ready"
-        else:
+        elif scenario == "overheated":
             assert card["technical_structure"]["state"] == "Exhaustion"
             assert card["simulation_status"] != "Trade Ready"
+        elif scenario == "pullback-rebound":
+            assert card["technical_structure"]["state"] == "Pullback Entry Zone"
+            assert card["simulation_status"] == "Trade Ready"
+        elif scenario == "breakdown":
+            assert card["technical_structure"]["state"] == "Breakdown"
+            assert card["simulation_status"] != "Trade Ready"
+            assert "structure_not_confirmed" in card["blockers"]
         write_card(card, Path(output) / scenario)
         write_share(card, Path(output) / scenario / "share.svg")
         results.append({"scenario": scenario, "analysis_id": card["analysis_id"],
